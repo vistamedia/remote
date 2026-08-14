@@ -2,9 +2,6 @@
 
 /* Serveur de la télécommande.
  *
- * Jalon 1 : audio seulement. Le flux SSE, le média et l'écran arriveront à
- * leur jalon respectif — les routes correspondantes n'existent pas encore.
- *
  * Zéro dépendance : modules intégrés uniquement.
  */
 
@@ -15,8 +12,12 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const audio = require("./lib/audio.js");
+const media = require("./lib/media.js");
+const display = require("./lib/display.js");
 const sse = require("./lib/sse.js");
 const state = require("./lib/state.js");
+
+const MEDIA_ACTIONS = ["playpause", "next", "previous"];
 
 /* Le sondage démarre à l'arrivée du premier client et s'arrête au départ du
    dernier : sans personne pour écouter, aucun process n'est forké. */
@@ -145,7 +146,7 @@ async function handleVolume(req, res) {
     throw new BadRequest("corps attendu : { value } ou { delta }");
   }
 
-  const result = await audio.setVolume(value);
+  const result = state.compose(await audio.setVolume(value));
   state.publish(result);
   return sendJson(res, 200, result);
 }
@@ -162,9 +163,35 @@ async function handleMute(req, res) {
     throw new BadRequest("corps attendu : { muted } ou { toggle: true }");
   }
 
-  const result = await audio.setMuted(muted);
+  const result = state.compose(await audio.setMuted(muted));
   state.publish(result);
   return sendJson(res, 200, result);
+}
+
+async function handleMedia(req, res) {
+  if (!media.isAvailable()) {
+    return sendJson(res, 503, { error: "aucun backend média disponible" });
+  }
+
+  const body = await readBody(req);
+  if (MEDIA_ACTIONS.indexOf(body.action) === -1) {
+    throw new BadRequest("action attendue : playpause, next ou previous");
+  }
+
+  await media.control(body.action);
+  const result = state.compose();
+  state.publish(result);
+  return sendJson(res, 200, result);
+}
+
+async function handleDisplay(req, res) {
+  const body = await readBody(req);
+  if (display.ACTIONS.indexOf(body.action) === -1) {
+    throw new BadRequest("action attendue : sleep ou wake");
+  }
+
+  await display.run(body.action);
+  return sendJson(res, 200, state.compose());
 }
 
 async function handleApi(req, res, url) {
@@ -174,18 +201,26 @@ async function handleApi(req, res, url) {
 
   try {
     if (req.method === "GET" && url.pathname === "/api/state") {
-      return sendJson(res, 200, await audio.read());
+      const base = await audio.read();
+      await media.refresh();
+      return sendJson(res, 200, state.compose(base));
     }
     if (req.method === "GET" && url.pathname === "/api/events") {
       /* État courant sans relecture : le client fait de toute façon un
          GET /api/state à l'affichage, inutile de forker deux fois. */
-      return sse.attach(req, res, audio.snapshot());
+      return sse.attach(req, res, state.compose());
     }
     if (req.method === "POST" && url.pathname === "/api/volume") {
       return await handleVolume(req, res);
     }
     if (req.method === "POST" && url.pathname === "/api/mute") {
       return await handleMute(req, res);
+    }
+    if (req.method === "POST" && url.pathname === "/api/media") {
+      return await handleMedia(req, res);
+    }
+    if (req.method === "POST" && url.pathname === "/api/display") {
+      return await handleDisplay(req, res);
     }
     return sendJson(res, 404, { error: "route inconnue" });
   } catch (err) {
@@ -241,12 +276,13 @@ const server = http.createServer((req, res) => {
   return serveStatic(req, res, url);
 });
 
-audio.init().then(() => {
+Promise.all([audio.init(), media.refresh()]).then(() => {
   /* 0.0.0.0 est indispensable pour que l'iPhone joigne le Mac. Le pare-feu
      macOS demandera l'autorisation au premier lancement. */
   server.listen(PORT, "0.0.0.0", () => {
     const host = os.hostname();
-    console.log("remote — jalon 1 (audio)");
+    console.log("remote — audio, média et écran");
+    console.log("  média   " + (media.isAvailable() ? "disponible" : "aucun backend"));
     console.log("  local   http://localhost:" + PORT + "/?t=" + TOKEN);
     console.log("  réseau  http://" + host + ":" + PORT + "/?t=" + TOKEN);
     console.log("  token   " + CONFIG_FILE);
