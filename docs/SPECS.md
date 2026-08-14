@@ -336,6 +336,7 @@ Le jalon 2 est déjà utilisable tous les soirs. Le reste est du confort.
 
 - Chemins audio à volume verrouillé (HDMI, certains DAC) : hors de portée. Voir V1.
 - `nowplaying-cli` repose sur une API privée d'Apple : peut casser à toute mise à jour majeure de macOS. Le repli AppleScript ne couvre pas les navigateurs.
+- Le changement d'épisode Netflix est hors de portée. Une page web doit déclarer auprès de l'API MediaSession les commandes qu'elle accepte ; Netflix déclare la lecture et la pause, mais pas le passage à la piste suivante ou précédente. Les boutons restent donc sans effet sur ses lectures — y compris depuis les touches média du clavier du Mac, ce qui confirme que rien ne vient de l'application. Ces deux boutons gardent tout leur sens pour Music, Spotify, VLC et YouTube.
 - Mac endormi : télécommande injoignable.
 - Pas de fonctionnement hors ligne : l'app est une fenêtre sur le serveur.
 - Volume système global uniquement, pas de réglage par application.
