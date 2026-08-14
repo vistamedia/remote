@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Veilleuse">
+<meta name="theme-color" content="#0B0A09">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>remote</title>
+<style>
+  :root{
+    --ink:#0B0A09;
+    --surface:#17140F;
+    --ember:#E8873A;
+    --ember-low:#7A4418;
+    --bone:#E6DDCE;
+    --muted:#6E655A;
+
+    --fill:38%;
+    --accent:var(--ember);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+
+  html,body{height:100%;background:var(--ink);overscroll-behavior:none}
+
+  body{
+    font-family:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
+    color:var(--bone);
+    -webkit-tap-highlight-color:transparent;
+    -webkit-touch-callout:none;
+    user-select:none;-webkit-user-select:none;
+  }
+
+  #app{
+    position:fixed;inset:0;
+    display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    transition:opacity 1.4s ease;
+  }
+  #app.dimmed{opacity:.34}
+
+  /* ---------- colonne ---------- */
+
+  #stage{
+    position:relative;flex:1;
+    overflow:hidden;
+    touch-action:none;
+    background:var(--surface);
+  }
+
+  #fill{
+    position:absolute;left:0;right:0;bottom:0;
+    height:var(--fill);
+    background:linear-gradient(to top,#B4601F 0%,var(--accent) 100%);
+    transition:height .12s ease-out,background .5s ease;
+  }
+  /* la ligne de niveau, qui sert aussi de poignée */
+  #fill::after{
+    content:"";
+    position:absolute;left:0;right:0;top:0;height:1px;
+    background:#FFC98A;
+    box-shadow:0 0 20px 4px rgba(232,135,58,.5);
+  }
+  #grip{
+    position:absolute;left:50%;bottom:var(--fill);
+    width:46px;height:3px;margin-left:-23px;margin-bottom:-1px;
+    border-radius:2px;
+    background:#FFD9A8;opacity:.75;
+    transition:bottom .12s ease-out;
+    pointer-events:none;
+  }
+
+  /* Deux calques identiques : le second est découpé à la ligne de
+     niveau et rendu en sombre, donc tout ce qui est immergé
+     dans la lumière s'inverse au lieu de disparaître. */
+  .content{
+    position:absolute;inset:0;
+    pointer-events:none;
+  }
+  .content.knock{
+    clip-path:inset(calc(100% - var(--fill)) 0 0 0);
+    color:var(--ink);
+  }
+
+  .sign{
+    position:absolute;left:0;right:0;
+    text-align:center;
+    font-size:44px;font-weight:400;line-height:1;
+    color:var(--muted);
+    transition:color .15s ease;
+  }
+  .sign.up{top:7%}
+  .sign.down{bottom:7%}
+  .knock .sign{color:var(--ink);opacity:.5}
+
+  #stage.hit-up   .content:not(.knock) .sign.up,
+  #stage.hit-down .content:not(.knock) .sign.down{color:var(--bone)}
+  #stage.hit-up   .knock .sign.up,
+  #stage.hit-down .knock .sign.down{opacity:.85}
+
+  .readout{
+    position:absolute;left:0;right:0;top:50%;
+    transform:translateY(-50%);
+    text-align:center;
+  }
+  .num{
+    display:block;
+    font-size:clamp(88px,30vw,180px);
+    font-weight:700;line-height:.86;
+    letter-spacing:-.05em;
+    font-variant-numeric:tabular-nums;
+    color:var(--accent);
+    transition:color .5s ease;
+  }
+  .knock .num{color:var(--ink)}
+  .cap{
+    display:block;margin-top:14px;
+    font-size:11px;font-weight:600;
+    letter-spacing:.32em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .knock .cap{color:var(--ink);opacity:.55}
+
+  #dot{
+    position:absolute;top:18px;left:18px;
+    width:6px;height:6px;border-radius:50%;
+    background:var(--accent);opacity:.5;
+    transition:opacity .3s,background .3s;
+  }
+  #dot.off{background:var(--muted);opacity:.35}
+
+  /* ---------- barre basse ---------- */
+
+  footer{
+    background:var(--ink);
+    padding:20px 16px calc(14px + env(safe-area-inset-bottom));
+    flex-shrink:0;
+  }
+  #track{
+    text-align:center;font-size:12px;
+    color:var(--muted);margin-bottom:16px;height:15px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  #transport{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+
+  button{
+    -webkit-appearance:none;appearance:none;border:0;
+    background:transparent;color:var(--bone);
+    font-family:inherit;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    min-height:68px;border-radius:16px;
+    transition:background .12s ease,color .3s ease;
+  }
+  button:active{background:#221D16}
+  button:focus-visible{outline:2px solid var(--ember);outline-offset:-3px}
+  svg{width:26px;height:26px;fill:currentColor}
+  #mute.on{color:var(--ember-low)}
+
+  #screen{
+    width:100%;margin-top:6px;min-height:50px;
+    font-size:11px;font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="stage">
+    <span id="dot"></span>
+    <div id="fill"></div>
+    <div id="grip"></div>
+
+    <div class="content">
+      <div class="sign up">+</div>
+      <div class="readout">
+        <span class="num" data-num>38</span>
+        <span class="cap" data-cap>Volume</span>
+      </div>
+      <div class="sign down">&minus;</div>
+    </div>
+
+    <div class="content knock" aria-hidden="true">
+      <div class="sign up">+</div>
+      <div class="readout">
+        <span class="num" data-num>38</span>
+        <span class="cap" data-cap>Volume</span>
+      </div>
+      <div class="sign down">&minus;</div>
+    </div>
+  </div>
+
+  <footer>
+    <div id="track">Pink Moon · Nick Drake</div>
+
+    <div id="transport">
+      <button id="prev" aria-label="Piste précédente">
+        <svg viewBox="0 0 24 24"><path d="M7 6h2v12H7zM19 6v12L10 12z"/></svg>
+      </button>
+      <button id="play" aria-label="Lecture ou pause">
+        <svg viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z"/></svg>
+      </button>
+      <button id="next" aria-label="Piste suivante">
+        <svg viewBox="0 0 24 24"><path d="M15 6h2v12h-2zM5 6l9 6-9 6z"/></svg>
+      </button>
+      <button id="mute" aria-label="Couper le son">
+        <svg viewBox="0 0 24 24"><path d="M4 9h3l5-4v14l-5-4H4z"/><path d="M16.5 9.5l4 4M20.5 9.5l-4 4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <button id="screen">Éteindre l’écran du Mac</button>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* Passer à false pour brancher sur le serveur. */
+const MOCK = true;
+
+const TOKEN = new URLSearchParams(location.search).get("t")
+            || localStorage.getItem("remote_token") || "";
+if (TOKEN) localStorage.setItem("remote_token", TOKEN);
+
+const DIM_DELAY   = 8000;
+const GUARD       = 600;
+const STEP        = 5;
+const HOLD_DELAY  = 450;
+const HOLD_RATE   = 130;
+
+const app     = document.getElementById("app");
+const stage   = document.getElementById("stage");
+const dot     = document.getElementById("dot");
+const track   = document.getElementById("track");
+const nums    = document.querySelectorAll("[data-num]");
+const caps    = document.querySelectorAll("[data-cap]");
+const muteBtn = document.getElementById("mute");
+
+let volume = 38, muted = false, playing = true;
+let guardUntil = 0, dimTimer = null;
+
+/* ---------- rendu ---------- */
+
+function render() {
+  const v = Math.round(volume);
+  document.documentElement.style.setProperty("--fill", v + "%");
+  document.documentElement.style.setProperty("--accent",
+    muted ? "var(--ember-low)" : "var(--ember)");
+  nums.forEach(n => n.textContent = v);
+  caps.forEach(c => c.textContent = muted ? "Muet" : "Volume");
+}
+
+function setVolume(v) {
+  volume = Math.min(100, Math.max(0, v));
+  if (muted && volume > 0) { muted = false; muteBtn.classList.remove("on"); send("/mute", { muted:false }); }
+  render();
+  queue();
+}
+
+/* ---------- veille de l'affichage ---------- */
+
+function wake() {
+  const wasDim = app.classList.contains("dimmed");
+  app.classList.remove("dimmed");
+  clearTimeout(dimTimer);
+  dimTimer = setTimeout(() => app.classList.add("dimmed"), DIM_DELAY);
+  return wasDim;
+}
+
+/* ---------- réseau ---------- */
+
+async function send(path, body) {
+  guardUntil = Date.now() + GUARD;
+  if (MOCK) return;
+  try {
+    const r = await fetch("/api" + path, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "X-Token":TOKEN },
+      body:JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error(r.status);
+    apply(await r.json());
+    dot.classList.remove("off");
+  } catch { dot.classList.add("off"); }
+}
+
+function apply(s) {
+  if (Date.now() < guardUntil) return;
+  if (Math.abs(s.volume - volume) > 3) volume = s.volume;  // tolérance d'arrondi macOS
+  muted = s.muted;
+  muteBtn.classList.toggle("on", muted);
+  if (s.media && s.media.title) {
+    track.textContent = s.media.artist ? s.media.title + " · " + s.media.artist : s.media.title;
+    playing = s.media.playing;
+  }
+  render();
+}
+
+function listen() {
+  if (MOCK) return;
+  const es = new EventSource("/api/events?t=" + encodeURIComponent(TOKEN));
+  es.addEventListener("state", e => apply(JSON.parse(e.data)));
+  es.onopen  = () => dot.classList.remove("off");
+  es.onerror = () => dot.classList.add("off");
+}
+
+async function refresh() {
+  if (MOCK) return;
+  try {
+    const r = await fetch("/api/state", { headers:{ "X-Token":TOKEN } });
+    apply(await r.json());
+    dot.classList.remove("off");
+  } catch { dot.classList.add("off"); }
+}
+
+/* Throttle 80 ms, envoi final garanti. Le serveur ne garde que
+   la dernière valeur : on remplace, on n'empile pas. */
+let pending = null, sendTimer = null;
+function queue() {
+  pending = Math.round(volume);
+  if (sendTimer) return;
+  sendTimer = setTimeout(() => { sendTimer = null; flush(); }, 80);
+}
+function flush() {
+  if (pending === null) return;
+  send("/volume", { value: pending });
+  pending = null;
+}
+
+/* ---------- zones tactiles ---------- */
+
+let holdTimer = null, repeatTimer = null;
+let dragging = false, lastY = 0, moved = 0, dir = 0;
+
+function stopHold() {
+  clearTimeout(holdTimer); clearInterval(repeatTimer);
+  holdTimer = repeatTimer = null;
+  stage.classList.remove("hit-up","hit-down");
+}
+
+stage.addEventListener("pointerdown", e => {
+  stage.setPointerCapture(e.pointerId);
+  lastY = e.clientY; moved = 0; dragging = true;
+
+  /* Premier contact sur un écran atténué : on réveille seulement.
+     Sinon on bougerait le son chaque fois qu'on saisit le téléphone. */
+  if (wake()) { dir = 0; return; }
+
+  const r = stage.getBoundingClientRect();
+  dir = (e.clientY - r.top) < r.height / 2 ? 1 : -1;
+  stage.classList.add(dir > 0 ? "hit-up" : "hit-down");
+
+  setVolume(volume + dir * STEP);
+
+  holdTimer = setTimeout(() => {
+    repeatTimer = setInterval(() => setVolume(volume + dir * STEP), HOLD_RATE);
+  }, HOLD_DELAY);
+});
+
+stage.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  const dy = e.clientY - lastY;
+  lastY = e.clientY;
+  moved += Math.abs(dy);
+
+  /* Au-delà de 10 px, l'appui devient un glissement continu :
+     on annule la répétition et on suit le doigt. */
+  if (moved > 10) {
+    if (holdTimer || repeatTimer) stopHold();
+    wake();
+    setVolume(volume - dy / stage.clientHeight * 100);
+  }
+});
+
+stage.addEventListener("pointerup", () => { dragging = false; stopHold(); flush(); });
+stage.addEventListener("pointercancel", () => { dragging = false; stopHold(); flush(); });
+
+/* ---------- commandes ---------- */
+
+document.getElementById("prev").onclick = () => { wake(); send("/media",{ action:"previous" }); };
+document.getElementById("next").onclick = () => { wake(); send("/media",{ action:"next" }); };
+
+document.getElementById("play").onclick = e => {
+  wake();
+  playing = !playing;
+  e.currentTarget.querySelector("svg").innerHTML = playing
+    ? '<path d="M7 5h3v14H7zM14 5h3v14h-3z"/>'
+    : '<path d="M8 5l12 7-12 7z"/>';
+  send("/media",{ action:"playpause" });
+};
+
+muteBtn.onclick = () => {
+  wake();
+  muted = !muted;
+  muteBtn.classList.toggle("on", muted);
+  render();
+  send("/mute",{ muted });
+};
+
+document.getElementById("screen").onclick = () => { wake(); send("/display",{ action:"sleep" }); };
+
+/* Safari gèle la page en arrière-plan : on resynchronise au retour. */
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { wake(); refresh(); } });
+document.addEventListener("gesturestart", e => e.preventDefault());
+
+if (MOCK) dot.classList.remove("off");
+render(); wake(); refresh(); listen();
+</script>
+</body>
+</html>
