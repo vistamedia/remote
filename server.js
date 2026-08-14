@@ -15,6 +15,12 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const audio = require("./lib/audio.js");
+const sse = require("./lib/sse.js");
+const state = require("./lib/state.js");
+
+/* Le sondage démarre à l'arrivée du premier client et s'arrête au départ du
+   dernier : sans personne pour écouter, aucun process n'est forké. */
+sse.configure({ onFirst: state.start, onLast: state.stop });
 
 const PORT = 8765;
 const PUBLIC_DIR = path.resolve(__dirname, "public");
@@ -139,7 +145,9 @@ async function handleVolume(req, res) {
     throw new BadRequest("corps attendu : { value } ou { delta }");
   }
 
-  return sendJson(res, 200, await audio.setVolume(value));
+  const result = await audio.setVolume(value);
+  state.publish(result);
+  return sendJson(res, 200, result);
 }
 
 async function handleMute(req, res) {
@@ -154,7 +162,9 @@ async function handleMute(req, res) {
     throw new BadRequest("corps attendu : { muted } ou { toggle: true }");
   }
 
-  return sendJson(res, 200, await audio.setMuted(muted));
+  const result = await audio.setMuted(muted);
+  state.publish(result);
+  return sendJson(res, 200, result);
 }
 
 async function handleApi(req, res, url) {
@@ -165,6 +175,11 @@ async function handleApi(req, res, url) {
   try {
     if (req.method === "GET" && url.pathname === "/api/state") {
       return sendJson(res, 200, await audio.read());
+    }
+    if (req.method === "GET" && url.pathname === "/api/events") {
+      /* État courant sans relecture : le client fait de toute façon un
+         GET /api/state à l'affichage, inutile de forker deux fois. */
+      return sse.attach(req, res, audio.snapshot());
     }
     if (req.method === "POST" && url.pathname === "/api/volume") {
       return await handleVolume(req, res);
