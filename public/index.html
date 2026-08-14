@@ -223,7 +223,7 @@
 "use strict";
 
 /* Passer à false pour brancher sur le serveur. */
-const MOCK = true;
+const MOCK = false;
 
 const TOKEN = new URLSearchParams(location.search).get("t")
             || localStorage.getItem("remote_token") || "";
