@@ -7,9 +7,14 @@ Ce fichier ne contient que les règles qui doivent tenir à chaque session.
 
 ## Périmètre
 
-Un seul Mac, un seul iPhone, un seul réseau local. Pas de cloud, pas de comptes,
-pas de multi-utilisateur, pas d'accès depuis l'extérieur. Ne pas généraliser
-au-delà du besoin décrit.
+Une instance par Mac, pilotée depuis l'iPhone de son propriétaire, sur le réseau
+local. Plusieurs Macs du foyer peuvent recevoir l'app : les installations sont
+indépendantes et ne se connaissent pas. Pas de cloud, pas de comptes, pas de
+serveur central, pas de pilotage d'un Mac par un autre, pas d'accès depuis
+l'extérieur. Ne pas généraliser au-delà du besoin décrit.
+
+Ce qui est multiple, c'est le déploiement. L'architecture, elle, reste mono-Mac :
+un serveur ne connaît que la machine sur laquelle il tourne.
 
 ## Contraintes techniques non négociables
 

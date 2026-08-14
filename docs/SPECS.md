@@ -8,7 +8,9 @@ Télécommande web pour piloter le volume, la lecture et l'écran d'un Mac depui
 
 **Le besoin.** Le Mac est posé sur un meuble le soir et diffuse du son. On veut, depuis le lit, régler le volume, couper le son, passer une piste et éteindre l'écran — sans se lever, sans allumer la lumière, et sans avoir à bien viser.
 
-**Ce que ce n'est pas.** Pas une app de contrôle à distance générique (pas de souris, pas de clavier, pas d'écran déporté). Pas d'accès depuis l'extérieur du domicile. Pas de multi-machine.
+**Ce que ce n'est pas.** Pas une app de contrôle à distance générique (pas de souris, pas de clavier, pas d'écran déporté). Pas d'accès depuis l'extérieur du domicile. Pas de pilotage croisé : une instance ne pilote jamais que le Mac sur lequel elle tourne.
+
+**Plusieurs personnes, plusieurs installations.** L'app est installée séparément sur chaque Mac du foyer, et chacun pilote le sien depuis son propre iPhone. Les instances sont totalement indépendantes : chacune a son token, son nom Bonjour et son URL, et aucune ne connaît l'existence des autres. Ni annuaire, ni serveur central, ni compte. Ce qui doit être multiple, c'est l'installation — pas l'architecture, qui reste strictement mono-Mac.
 
 **Contraintes retenues.**
 
@@ -17,7 +19,8 @@ Télécommande web pour piloter le volume, la lecture et l'écran d'un Mac depui
 | Réseau | LAN uniquement, Wi-Fi domestique |
 | Client | Safari iOS, ajouté à l'écran d'accueil |
 | Latence perçue | < 150 ms entre le geste et le son qui bouge |
-| Dépendances Mac | Aucune obligatoire hors Node.js ; `nowplaying-cli` optionnel |
+| Dépendances Mac | Node.js obligatoire, à installer ; `nowplaying-cli` optionnel |
+| Déploiement | Une instance autonome par Mac, sans lien entre elles |
 | Utilisation | Une main, dans le noir, sans regarder précisément |
 
 ---
@@ -25,6 +28,8 @@ Télécommande web pour piloter le volume, la lecture et l'écran d'un Mac depui
 ## 2. Vérifications préalables (bloquantes)
 
 À faire **avant** d'écrire une ligne de code. Chacune peut invalider une partie du projet.
+
+**À refaire sur chaque Mac qui reçoit l'app.** V1 dépend de la sortie audio et V2 de la version de macOS : un résultat obtenu sur une machine ne dit rien de la suivante. Une installation peut parfaitement fonctionner chez l'un et rester inutilisable chez l'autre, sans que rien ne soit cassé pour autant.
 
 **V1 — le volume système est-il pilotable ?**
 
@@ -78,7 +83,7 @@ L'écran doit s'éteindre sans interrompre la lecture ni endormir la machine. Pa
 
 **Choix de la stack : Node.js ≥ 18, zéro dépendance npm.**
 
-Node est présent ou installable en une commande, son module `http` intégré suffit, et `child_process.execFile` couvre tout l'appel système. Surtout : en remplaçant le WebSocket par du **SSE** (Server-Sent Events), on supprime la seule dépendance qui aurait été nécessaire. Le flux serveur → client transporte l'état ; le sens client → serveur passe par de simples `POST`. C'est exactement la forme du besoin, et `EventSource` est natif dans Safari iOS.
+Node n'est pas fourni avec macOS : il faudra l'installer sur chaque machine, et c'est le seul prérequis du projet. En contrepartie, son module `http` intégré suffit, et `child_process.execFile` couvre tout l'appel système. Surtout : en remplaçant le WebSocket par du **SSE** (Server-Sent Events), on supprime la seule dépendance qui aurait été nécessaire. Le flux serveur → client transporte l'état ; le sens client → serveur passe par de simples `POST`. C'est exactement la forme du besoin, et `EventSource` est natif dans Safari iOS.
 
 Python ferait le travail aussi, mais impose une gestion de venv qui complique le LaunchAgent. Un binaire Swift serait plus rapide et sans dépendance du tout — c'est la bonne cible si tu veux plus tard supprimer le coût des `osascript` (voir §6.1) — mais c'est un cycle d'itération plus lourd pour une v1.
 
@@ -288,6 +293,8 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/local.remote.plist
 
 **La veille du Mac.** Point à ne pas négliger : si le Mac s'endort, le serveur devient injoignable et la télécommande est morte. En pratique, une lecture audio en cours empêche la veille système, donc le cas nominal fonctionne. Mais si la musique est en pause et que le Mac s'endort, l'iPhone ne pourra plus rien faire — y compris relancer la lecture. Deux options : régler « empêcher la veille automatique lorsque l'écran est éteint » sur secteur, ou accepter la limite. À trancher à l'usage plutôt qu'à l'avance.
 
+**Installer sur une machine qu'on ne connaît pas.** Chaque Mac reçoit sa propre installation, et la personne qui s'en sert ne doit rien avoir à configurer. `install.sh` prend donc tout en charge : vérifier que Node est présent et s'arrêter avec un message clair sinon, générer le token, écrire le plist, charger le LaunchAgent, lire le nom Bonjour de la machine et afficher l'URL à ajouter à l'écran d'accueil. Il doit aussi constater l'absence de `nowplaying-cli` sans échouer : le média bascule alors sur le repli AppleScript du §6.3, et l'interface masque ce qu'elle ne sait pas faire plutôt que d'afficher des boutons morts.
+
 **Arborescence.**
 
 ```
@@ -332,6 +339,8 @@ Le jalon 2 est déjà utilisable tous les soirs. Le reste est du confort.
 - Mac endormi : télécommande injoignable.
 - Pas de fonctionnement hors ligne : l'app est une fenêtre sur le serveur.
 - Volume système global uniquement, pas de réglage par application.
+- Une installation par Mac, à vérifier machine par machine (§2). Rien n'est mutualisé, rien ne se synchronise.
+- Node.js doit être installé au préalable sur chaque machine.
 
 ## 13. Évolutions envisageables
 
