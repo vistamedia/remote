@@ -19,6 +19,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const audio = require("./lib/audio.js");
+const brightness = require("./lib/brightness.js");
 const media = require("./lib/media.js");
 const display = require("./lib/display.js");
 const sse = require("./lib/sse.js");
@@ -194,6 +195,36 @@ async function handleVolume(req, res) {
   return sendJson(res, 200, result);
 }
 
+async function handleBrightness(req, res) {
+  if (!brightness.state.controllable) {
+    return sendJson(res, 409, { error: "cet écran ne laisse pas régler sa luminosité" });
+  }
+
+  const body = await readBody(req);
+  let value;
+
+  if (Object.prototype.hasOwnProperty.call(body, "value")) {
+    if (!Number.isInteger(body.value) || body.value < 0 || body.value > 100) {
+      throw new BadRequest("value doit être un entier de 0 à 100");
+    }
+    value = body.value;
+  } else if (Object.prototype.hasOwnProperty.call(body, "delta")) {
+    if (!Number.isInteger(body.delta) || body.delta < -100 || body.delta > 100) {
+      throw new BadRequest("delta doit être un entier de -100 à 100");
+    }
+    /* Comme pour le volume, le delta s'applique à l'état réel du moment et
+       non à ce que croit le client. */
+    value = Math.min(100, Math.max(0, brightness.state.value + body.delta));
+  } else {
+    throw new BadRequest("corps attendu : { value } ou { delta }");
+  }
+
+  await brightness.setValue(value);
+  const result = state.compose();
+  state.publish(result);
+  return sendJson(res, 200, result);
+}
+
 async function handleMute(req, res) {
   const body = await readBody(req);
   let muted;
@@ -271,6 +302,9 @@ async function handleApi(req, res, url) {
     if (req.method === "POST" && url.pathname === "/api/volume") {
       return await handleVolume(req, res);
     }
+    if (req.method === "POST" && url.pathname === "/api/brightness") {
+      return await handleBrightness(req, res);
+    }
     if (req.method === "POST" && url.pathname === "/api/mute") {
       return await handleMute(req, res);
     }
@@ -346,13 +380,14 @@ const server = http.createServer((req, res) => {
   return serveStatic(req, res, url);
 });
 
-Promise.all([audio.init(), media.refresh()]).then(() => {
+Promise.all([audio.init(), brightness.init(), media.refresh()]).then(() => {
   /* 0.0.0.0 est indispensable pour que l'iPhone joigne le Mac. Le pare-feu
      macOS demandera l'autorisation au premier lancement. */
   server.listen(PORT, "0.0.0.0", () => {
     const host = os.hostname();
-    console.log("remote — audio, média et écran");
+    console.log("remote — audio, luminosité, média et écran");
     console.log("  média   " + (media.isAvailable() ? "disponible" : "aucun backend"));
+    console.log("  lumière " + (brightness.state.controllable ? "pilotable" : "non pilotable"));
     console.log("  local   http://localhost:" + PORT + "/?t=" + TOKEN);
     console.log("  réseau  http://" + host + ":" + PORT + "/?t=" + TOKEN);
     console.log("  token   " + CONFIG_FILE);
