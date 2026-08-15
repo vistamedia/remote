@@ -31,8 +31,8 @@ construire_menubar() {
   # périodiquement le gestionnaire idle.
   osacompile -s -o "$cible" "$ICI/WinxRemote.applescript"
 
-  # L'icône de barre de menus, la même que sur l'écran d'accueil de l'iPhone.
-  cp "$ICI/assets/menubar.png" "$cible/Contents/Resources/"
+  # Icône de barre de menus, monochrome, dans les trois densités d'écran.
+  cp "$ICI/assets/menubarWingsPlayTemplate"*.png "$cible/Contents/Resources/"
   # L'icône du bundle remplace celle d'AppleScript, posée par osacompile.
   cp "$ICI/assets/AppIcon.icns" "$cible/Contents/Resources/applet.icns"
 
@@ -71,7 +71,7 @@ construire_installeur() {
   # -R : public/ contient désormais les sous-dossiers icons/ et fonts/.
   cp -R "$RACINE"/public/. "$res/payload/public/"
   cp "$ICI/WinxRemote.applescript" "$res/"
-  cp "$ICI/assets/menubar.png" "$res/"
+  cp "$ICI/assets/menubarWingsPlayTemplate"*.png "$res/"
   cp "$ICI/assets/AppIcon.icns" "$res/"
   cp "$ICI/assets/AppIcon.icns" "$res/applet.icns"
 

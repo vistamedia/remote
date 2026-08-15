@@ -93,7 +93,7 @@ on installer()
 	do shell script "/bin/mkdir -p " & quoted form of dossierApps
 	do shell script "/bin/rm -rf " & quoted form of (dossierApps & "/Winx Remote.app")
 	do shell script "/usr/bin/osacompile -s -o " & quoted form of (dossierApps & "/Winx Remote.app") & " " & quoted form of (lesRessources & "WinxRemote.applescript")
-	do shell script "/bin/cp " & quoted form of (lesRessources & "menubar.png") & " " & quoted form of (dossierApps & "/Winx Remote.app/Contents/Resources/")
+	do shell script "/bin/cp " & quoted form of (lesRessources & "menubarWingsPlayTemplate.png") & " " & quoted form of (lesRessources & "menubarWingsPlayTemplate@2x.png") & " " & quoted form of (lesRessources & "menubarWingsPlayTemplate@3x.png") & " " & quoted form of (dossierApps & "/Winx Remote.app/Contents/Resources/")
 	-- Remplace l'icône d'AppleScript posée par osacompile.
 	do shell script "/bin/cp " & quoted form of (lesRessources & "AppIcon.icns") & " " & quoted form of (dossierApps & "/Winx Remote.app/Contents/Resources/applet.icns")
 

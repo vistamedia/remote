@@ -62,14 +62,23 @@ on construireMenu()
 	set laBarre to current application's NSStatusBar's systemStatusBar()
 	set statusItem to laBarre's statusItemWithLength:(current application's NSVariableStatusItemLength)
 
-	(* L'icône de l'app, la même que sur l'écran d'accueil de l'iPhone. Elle
-	   garde son fond : sans lui, le triangle central, qui est clair,
-	   disparaîtrait sur une barre de menus en thème clair. L'état du serveur
-	   se lit à l'opacité plutôt qu'à un glyphe de plus. *)
-	set cheminIcone to (POSIX path of (path to me)) & "Contents/Resources/menubar.png"
-	set lIcone to current application's NSImage's alloc()'s initWithContentsOfFile:cheminIcone
+	(* Icône monochrome en mode « template » : macOS la recolore lui-même,
+	   noire sur une barre claire, blanche sur une barre sombre, et gère
+	   l'état pressé. C'est la seule façon de s'intégrer proprement, une
+	   icône en couleurs restant figée quel que soit le thème.
+
+	   imageNamed: choisit la densité qui convient à l'écran parmi les trois
+	   fichiers du bundle ; le repli par chemin sert si le nom n'est pas
+	   résolu, ce qui arrive hors bundle compilé. *)
+	set nomIcone to "menubarWingsPlayTemplate"
+	set lIcone to current application's NSImage's imageNamed:nomIcone
+	if lIcone is missing value then
+		set cheminIcone to (POSIX path of (path to me)) & "Contents/Resources/" & nomIcone & "@2x.png"
+		set lIcone to current application's NSImage's alloc()'s initWithContentsOfFile:cheminIcone
+	end if
 	if lIcone is not missing value then
-		lIcone's setSize:{18, 18}
+		lIcone's setTemplate:true
+		lIcone's setSize:{22, 22}
 		statusItem's button's setImage:lIcone
 	end if
 
