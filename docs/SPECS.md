@@ -1,4 +1,4 @@
-# remote — spécifications
+# Winx Remote — spécifications
 
 Télécommande web pour piloter le volume, la lecture et l'écran d'un Mac depuis un iPhone, sur le réseau local.
 
@@ -101,7 +101,12 @@ Toutes les réponses sont en JSON. Le token est transmis dans l'en-tête `X-Toke
   "muted": false,
   "outputDevice": "MacBook Pro Speakers",
   "volumeControllable": true,
-  "media": { "available": true, "playing": true, "title": "…", "artist": "…" }
+  "media": {
+    "available": true, "playing": true,
+    "title": "…", "artist": "…",
+    "duration": 3626, "elapsed": 178,
+    "source": "netflix"
+  }
 }
 ```
 
@@ -118,8 +123,10 @@ Corps `{ "muted": true }` ou `{ "toggle": true }`.
 
 ### `POST /api/media`
 
-Corps `{ "action": "playpause" | "next" | "previous" }`.
+Corps `{ "action": "playpause" | "next" | "previous" }`, ou `{ "action": "seek", "position": 178 }` pour une position absolue en secondes.
 `503` si aucun backend média n'est disponible.
+
+`duration`, `elapsed` et `source` sont nuls quand la source ne les publie pas — c'est le cas de Netflix. `source` est déduit du titre publié : on nomme la lecture en cours, on ne la choisit pas.
 
 ### `POST /api/display`
 
@@ -203,45 +210,50 @@ Couvre Music, Spotify, VLC, QuickTime. Ne couvre pas les navigateurs. L'API renv
 
 L'utilisateur est allongé, dans le noir, à moitié endormi, tenant le téléphone d'une main. Il ne visera pas juste. **La cible, c'est donc l'écran entier** : un glissement vertical n'importe où sur la page règle le volume. Il n'y a pas de curseur fin à attraper. Le remplissage de l'écran *est* le curseur.
 
-Un simple tap ne change rien — il réveille l'affichage. Seul le glissement agit. C'est ce qui rend l'objet utilisable sans regarder.
+Le glissement pose le volume à la hauteur du doigt, il ne l'incrémente pas : la zone entière est un curseur absolu. Un déplacement de moins de 3 px n'est pas un glissement, ce qui évite qu'un simple appui ne déplace le son.
 
 ### 7.2 Direction visuelle
 
-Le fond est noir chaud, presque sans bleu, et l'accent est ambré. Ce n'est pas un choix décoratif : c'est la combinaison la moins agressive pour un œil adapté à l'obscurité, et la moins susceptible de réveiller. L'écran doit informer sans éclairer la chambre.
+**Le design fait l'objet d'un handoff dédié**, `design_handoff_winx_remote/`, qui fait foi sur les couleurs, la typographie, les espacements et les gestes. Cette section n'en donne que la substance.
+
+Fond indigo profond, accent fuchsia virant au violet sur le remplissage du volume. La palette a été retenue pour une utilisatrice précise plutôt que pour l'usage nocturne : elle est plus lumineuse et plus saturée que la direction ambrée d'origine, qui visait à ne pas éclairer une chambre.
 
 ```
---ink        #0B0A09   fond
---surface    #17140F   colonne vide
---ember      #E8873A   remplissage, accent
---ember-low  #7A4418   rail, états inactifs
---bone       #E6DDCE   texte principal (jamais de blanc pur)
---muted      #6E655A   libellés
+--indigo-850  #0E0620   fond de l'app
+--indigo-900  #0B0518   fond du bloc lecture
+--indigo-700  #1B0E30   surface des boutons
+--fuchsia     #FF2D95   accent principal, haut du remplissage
+--violet      #8B36E8   bas du remplissage
+--gold        #FFCF5C   sourdine active, écran éteint
+--mint        #5CE6B5   état connecté
+--white       #FFF4FA   texte principal
+--mauve-500   #9C86B8   texte tertiaire
 ```
 
-**Typographie.** `ui-rounded` (SF Rounded, disponible nativement sur iOS, aucun téléchargement) pour tout. Le nombre du volume est posé très gros — lisible à trois mètres, à moitié réveillé — en `font-variant-numeric: tabular-nums` pour qu'il ne tressaute pas en changeant de chiffre. Les libellés sont minuscules, espacés, en `--muted`, et se contentent de nommer.
+**Typographie.** Outfit, en woff2 variable, **servie par le serveur et non par un CDN** : la télécommande doit fonctionner sur le réseau local sans accès à Internet. Le nombre du volume est posé en 104 px / 800, en `tabular-nums` pour qu'il ne tressaute pas en changeant de chiffre.
 
-**Auto-atténuation.** Après 8 secondes sans contact, toute l'interface passe à 35 % d'opacité en fondu lent. Le premier contact la restaure. C'est le geste principal du design : l'objet s'éteint tout seul et attend.
+**Pas d'auto-atténuation.** L'écran ne s'estompe plus après quelques secondes : le handoff ne retient qu'une seule transition, celle du remplissage de volume.
 
 ### 7.3 Structure
 
 ```
 ┌──────────────────────┐
+│                 ● ⬤  │   état de connexion
+│  ⋀  Winx Remote  [NF]│   icône, nom du Mac, source détectée
 │                      │
-│                      │   toute la surface = zone de glissement
-│                      │
-│         42           │   nombre, très grand, centré
-│       VOLUME         │   libellé minuscule
-│                      │
-│  ░░░░░░░░░░░░░░░░░░  │   remplissage ambré depuis le bas
-│  ██████████████████  │
-│  ██████████████████  │
+│          +           │
+│         75           │   nombre, très grand, centré
+│       VOLUME         │   remplissage fuchsia → violet depuis le bas
+│          −           │
 ├──────────────────────┤
-│  ⏮    ⏯    ⏭    🔇   │   barre fixe, cibles ≥ 64 px
-│         écran        │
+│  ▬▬▬▬▬▬●▭▭▭▭▭▭▭▭▭▭   │   progression, masquée si non publiée
+│  Titre · Source      │
+│  ⏮  −10  ⏯  +10  ⏭   │   transport, cibles ≥ 52 px
+│  🔇   éteindre l'écran│
 └──────────────────────┘
 ```
 
-État muet : le remplissage passe en `--ember-low`, le nombre reste affiché mais désaturé. On doit comprendre en un dixième de seconde que le son est coupé, pas seulement à zéro.
+État muet : le nombre affiche 0 en `--mauve-700`, le libellé passe à « sourdine », le bouton devient doré. La valeur réelle du volume est conservée et revient dès qu'on lève la sourdine.
 
 ### 7.4 Détails techniques d'interface
 
@@ -249,8 +261,8 @@ Le fond est noir chaud, presque sans bleu, et l'accent est ambré. Ce n'est pas 
 - `user-select: none` et `-webkit-touch-callout: none` : pas de loupe de sélection sur appui long.
 - `viewport-fit=cover` et `env(safe-area-inset-*)` : la barre de transport doit rester au-dessus de l'indicateur d'accueil.
 - Pas de retour haptique : `navigator.vibrate` n'existe pas sur Safari iOS.
-- `prefers-reduced-motion` respecté sur le fondu d'atténuation.
-- Point de connexion discret en haut, ambré si connecté, éteint sinon. Pas de bannière d'erreur qui éclaire l'écran.
+- La capture de pointeur est défensive : elle échoue sur certains pointeurs sans que le glissement doive s'interrompre.
+- **Aucune commande morte à l'écran.** Le sélecteur de source est un indicateur, macOS n'exposant qu'une session de lecture à la fois. La barre de progression disparaît quand la source ne publie ni durée ni position.
 
 ---
 
@@ -304,16 +316,26 @@ remote/
 │   ├── audio.js       osascript, parsing, coalescing
 │   ├── media.js       nowplaying-cli + repli AppleScript
 │   ├── display.js     pmset, caffeinate
-│   ├── state.js       état, sondage conditionnel
+│   ├── state.js       composition de l'état, sondage conditionnel
 │   └── sse.js
 ├── public/
-│   ├── index.html
-│   ├── app.js
-│   ├── style.css
+│   ├── index.html     écran unique, CSS et JS inclus
 │   ├── manifest.webmanifest
-│   └── icon-180.png
-└── install.sh         token, plist, chargement, affichage de l'URL
+│   ├── icons/         180 pour iOS, 192, 512 et maskable
+│   └── fonts/         Outfit variable, servie localement
+├── mac/
+│   ├── WinxRemote.applescript   app de barre de menus
+│   ├── Installer.applescript    installeur double-cliquable
+│   ├── assets/menubar.png       icône de la barre de menus
+│   └── build.sh                 fabrique les deux bundles
+└── design_handoff_winx_remote/  référence de design, fait foi
 ```
+
+**L'installation ne passe plus par un script shell** mais par un bundle
+double-cliquable, fabriqué par `mac/build.sh` et transporté sur clé USB. Un
+bundle créé localement n'est jamais mis en quarantaine : aucun avertissement
+de sécurité n'apparaît sur le Mac de destination, sans certificat Apple ni
+abonnement développeur.
 
 ---
 
@@ -328,7 +350,7 @@ remote/
 | 4 | Média + écran | Transport et extinction opérationnels |
 | 5 | Finition | Icône, manifeste, atténuation auto, LaunchAgent |
 
-Le jalon 2 est déjà utilisable tous les soirs. Le reste est du confort.
+Les six jalons sont livrés. L'interface a ensuite été refondue à partir du handoff `design_handoff_winx_remote/`, et l'installation confiée à un bundle double-cliquable plutôt qu'à un script.
 
 ---
 

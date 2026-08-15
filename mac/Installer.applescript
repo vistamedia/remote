@@ -1,5 +1,5 @@
 (*
-	Soft Remote — installeur
+	Winx Remote — installeur
 	Copyright (C) 2026 Emmanuel Danan <emmanuel.danan@gmail.com>
 	Distribué sous licence GNU GPL v3 ou ultérieure. Voir LICENSE.
 
@@ -22,16 +22,16 @@ property cheminPlist : missing value
 property lAdresse : ""
 
 on run
-	set dossierServeur to (POSIX path of (path to home folder)) & "Library/Application Support/Soft Remote"
+	set dossierServeur to (POSIX path of (path to home folder)) & "Library/Application Support/Winx Remote"
 	set dossierApps to (POSIX path of (path to home folder)) & "Applications"
 	set cheminPlist to (POSIX path of (path to home folder)) & "Library/LaunchAgents/local.remote.plist"
 
-	set laReponse to button returned of (display dialog "Soft Remote installera :
+	set laReponse to button returned of (display dialog "Winx Remote installera :
 
   • le serveur, qui démarrera tout seul à l'ouverture de session ;
   • l'app de barre de menus, pour l'état et le QR code.
 
-Rien n'est envoyé sur Internet, tout reste sur ce Mac." with title "Installer Soft Remote" buttons {"Annuler", "Installer"} default button "Installer" with icon note)
+Rien n'est envoyé sur Internet, tout reste sur ce Mac." with title "Installer Winx Remote" buttons {"Annuler", "Installer"} default button "Installer" with icon note)
 
 	if laReponse is "Annuler" then return
 
@@ -71,7 +71,7 @@ on cheminNode()
 end cheminNode
 
 on afficherNodeManquant()
-	set leChoix to button returned of (display dialog "Soft Remote a besoin de Node.js, qui n'est pas installé sur ce Mac.
+	set leChoix to button returned of (display dialog "Winx Remote a besoin de Node.js, qui n'est pas installé sur ce Mac.
 
 Téléchargez la version LTS depuis le site officiel, installez-la d'un double-clic, puis relancez cet installeur.
 
@@ -91,14 +91,15 @@ on installer()
 	-- L'app de barre de menus, compilée sur place : fabriquée localement,
 	-- elle échappe à la mise en quarantaine et ne déclenche aucun blocage.
 	do shell script "/bin/mkdir -p " & quoted form of dossierApps
-	do shell script "/bin/rm -rf " & quoted form of (dossierApps & "/Soft Remote.app")
-	do shell script "/usr/bin/osacompile -s -o " & quoted form of (dossierApps & "/Soft Remote.app") & " " & quoted form of (lesRessources & "SoftRemote.applescript")
+	do shell script "/bin/rm -rf " & quoted form of (dossierApps & "/Winx Remote.app")
+	do shell script "/usr/bin/osacompile -s -o " & quoted form of (dossierApps & "/Winx Remote.app") & " " & quoted form of (lesRessources & "WinxRemote.applescript")
+	do shell script "/bin/cp " & quoted form of (lesRessources & "menubar.png") & " " & quoted form of (dossierApps & "/Winx Remote.app/Contents/Resources/")
 
-	set lePlistApp to dossierApps & "/Soft Remote.app/Contents/Info.plist"
+	set lePlistApp to dossierApps & "/Winx Remote.app/Contents/Info.plist"
 	do shell script "/usr/libexec/PlistBuddy -c 'Add :LSUIElement bool true' " & quoted form of lePlistApp & " 2>/dev/null || true"
-	do shell script "/usr/libexec/PlistBuddy -c 'Add :CFBundleName string Soft Remote' " & quoted form of lePlistApp & " 2>/dev/null || true"
+	do shell script "/usr/libexec/PlistBuddy -c 'Add :CFBundleName string Winx Remote' " & quoted form of lePlistApp & " 2>/dev/null || true"
 	do shell script "/usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string local.remote.menubar' " & quoted form of lePlistApp & " 2>/dev/null || true"
-	do shell script "/usr/bin/codesign --force --sign - " & quoted form of (dossierApps & "/Soft Remote.app") & " 2>/dev/null || true"
+	do shell script "/usr/bin/codesign --force --sign - " & quoted form of (dossierApps & "/Winx Remote.app") & " 2>/dev/null || true"
 
 	-- Le service, avec les chemins de cette machine
 	ecrirePlist()
@@ -108,7 +109,7 @@ on installer()
 	attendreServeur()
 	calculerAdresse()
 
-	do shell script "/usr/bin/open " & quoted form of (dossierApps & "/Soft Remote.app")
+	do shell script "/usr/bin/open " & quoted form of (dossierApps & "/Winx Remote.app")
 end installer
 
 on ecrirePlist()
@@ -176,7 +177,7 @@ on calculerAdresse()
 end calculerAdresse
 
 on terminer()
-	set leChoix to button returned of (display dialog "Soft Remote est installé.
+	set leChoix to button returned of (display dialog "Winx Remote est installé.
 
 Le serveur démarrera désormais à chaque ouverture de session, et l'icône ◉ apparaît dans la barre de menus.
 

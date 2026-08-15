@@ -1,5 +1,5 @@
 (*
-	Soft Remote — app de barre de menus
+	Winx Remote — app de barre de menus
 	Copyright (C) 2026 Emmanuel Danan <emmanuel.danan@gmail.com>
 	Distribué sous licence GNU GPL v3 ou ultérieure. Voir LICENSE.
 
@@ -62,6 +62,17 @@ on construireMenu()
 	set laBarre to current application's NSStatusBar's systemStatusBar()
 	set statusItem to laBarre's statusItemWithLength:(current application's NSVariableStatusItemLength)
 
+	(* L'icône de l'app, la même que sur l'écran d'accueil de l'iPhone. Elle
+	   garde son fond : sans lui, le triangle central, qui est clair,
+	   disparaîtrait sur une barre de menus en thème clair. L'état du serveur
+	   se lit à l'opacité plutôt qu'à un glyphe de plus. *)
+	set cheminIcone to (POSIX path of (path to me)) & "Contents/Resources/menubar.png"
+	set lIcone to current application's NSImage's alloc()'s initWithContentsOfFile:cheminIcone
+	if lIcone is not missing value then
+		lIcone's setSize:{18, 18}
+		statusItem's button's setImage:lIcone
+	end if
+
 	set leMenu to current application's NSMenu's alloc()'s init()
 	leMenu's setAutoenablesItems:false
 
@@ -73,7 +84,7 @@ on construireMenu()
 	leMenu's addItem:(current application's NSMenuItem's separatorItem())
 	ajouterItem("Redémarrer le serveur", "redemarrerServeur:", true)
 	leMenu's addItem:(current application's NSMenuItem's separatorItem())
-	ajouterItem("Quitter Soft Remote", "quitterApp:", true)
+	ajouterItem("Quitter Winx Remote", "quitterApp:", true)
 
 	statusItem's setMenu:leMenu
 end construireMenu
@@ -103,11 +114,11 @@ on rafraichir()
 
 	if statusItem is not missing value then
 		if serveurActif then
-			statusItem's button's setTitle:"◉"
-			statusItem's button's setToolTip:"Soft Remote — serveur actif"
+			statusItem's button's setAlphaValue:1.0
+			statusItem's button's setToolTip:"Winx Remote — serveur actif"
 		else
-			statusItem's button's setTitle:"○"
-			statusItem's button's setToolTip:"Soft Remote — serveur arrêté"
+			statusItem's button's setAlphaValue:0.4
+			statusItem's button's setToolTip:"Winx Remote — serveur arrêté"
 		end if
 	end if
 

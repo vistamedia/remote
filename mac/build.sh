@@ -1,5 +1,5 @@
 #!/bin/bash
-# Soft Remote — fabrique l'app de barre de menus et l'installeur.
+# Winx Remote — fabrique l'app de barre de menus et l'installeur.
 # Copyright (C) 2026 Emmanuel Danan <emmanuel.danan@gmail.com>
 # Distribué sous licence GNU GPL v3 ou ultérieure. Voir LICENSE.
 #
@@ -29,12 +29,15 @@ construire_menubar() {
   mkdir -p "$(dirname "$cible")"
   # -s produit une application « stay open », qui reste vivante et reçoit
   # périodiquement le gestionnaire idle.
-  osacompile -s -o "$cible" "$ICI/SoftRemote.applescript"
+  osacompile -s -o "$cible" "$ICI/WinxRemote.applescript"
+
+  # L'icône de barre de menus, la même que sur l'écran d'accueil de l'iPhone.
+  cp "$ICI/assets/menubar.png" "$cible/Contents/Resources/"
 
   local plist="$cible/Contents/Info.plist"
   # LSUIElement la garde hors du Dock : elle ne vit que dans la barre de menus.
   poser "$plist" LSUIElement bool true
-  poser "$plist" CFBundleName string "Soft Remote"
+  poser "$plist" CFBundleName string "Winx Remote"
   poser "$plist" CFBundleIdentifier string local.remote.menubar
   poser "$plist" CFBundleShortVersionString string 1.0
   poser "$plist" NSHumanReadableCopyright string "Copyright (C) 2026 Emmanuel Danan — GNU GPL v3"
@@ -45,13 +48,13 @@ construire_menubar() {
 }
 
 construire_installeur() {
-  local cible="$SORTIE/Installer Soft Remote.app"
+  local cible="$SORTIE/Installer Winx Remote.app"
   rm -rf "$cible"
   mkdir -p "$SORTIE"
   osacompile -o "$cible" "$ICI/Installer.applescript"
 
   local plist="$cible/Contents/Info.plist"
-  poser "$plist" CFBundleName string "Installer Soft Remote"
+  poser "$plist" CFBundleName string "Installer Winx Remote"
   poser "$plist" CFBundleIdentifier string local.remote.installer
   poser "$plist" CFBundleShortVersionString string 1.0
   poser "$plist" NSHumanReadableCopyright string "Copyright (C) 2026 Emmanuel Danan — GNU GPL v3"
@@ -63,18 +66,20 @@ construire_installeur() {
   cp "$RACINE/server.js" "$res/payload/"
   cp "$RACINE/LICENSE" "$res/payload/"
   cp "$RACINE"/lib/*.js "$res/payload/lib/"
-  cp "$RACINE"/public/* "$res/payload/public/"
-  cp "$ICI/SoftRemote.applescript" "$res/"
+  # -R : public/ contient désormais les sous-dossiers icons/ et fonts/.
+  cp -R "$RACINE"/public/. "$res/payload/public/"
+  cp "$ICI/WinxRemote.applescript" "$res/"
+  cp "$ICI/assets/menubar.png" "$res/"
 
   codesign --force --sign - "$cible" >/dev/null 2>&1 || true
   echo "  installeur            : $cible"
 }
 
 if [ "$1" = "--menubar" ]; then
-  construire_menubar "${2:-$SORTIE/Soft Remote.app}"
+  construire_menubar "${2:-$SORTIE/Winx Remote.app}"
 else
-  construire_menubar "$SORTIE/Soft Remote.app"
+  construire_menubar "$SORTIE/Winx Remote.app"
   construire_installeur
   echo
-  echo "À copier sur la clé USB : $SORTIE/Installer Soft Remote.app"
+  echo "À copier sur la clé USB : $SORTIE/Installer Winx Remote.app"
 fi

@@ -1,6 +1,10 @@
-# remote
+# Winx Remote
 
 Télécommande web pour piloter le volume, la lecture et l'écran d'un Mac depuis un iPhone, sur le réseau local.
+
+Le dépôt s'appelle `remote`, l'application s'appelle **Winx Remote** : c'est ce
+nom qui apparaît sous l'icône de l'iPhone, dans la barre de menus du Mac et
+dans l'installeur.
 
 **Les specs complètes sont dans `docs/SPECS.md`. Les lire avant toute implémentation.**
 Ce fichier ne contient que les règles qui doivent tenir à chaque session.
@@ -38,19 +42,25 @@ un serveur ne connaît que la machine sur laquelle il tourne.
 - **Sondage conditionnel :** la boucle de relecture d'état ne tourne que s'il
   existe au moins un client SSE connecté. Sans client, aucun process forké.
 
-## L'interface est figée
+## L'interface vient du design, pas de Claude Code
 
-`public/index.html` est une interface validée après plusieurs itérations de
-design. Le rôle de Claude Code est de **la brancher sur l'API, pas de la
-redessiner**.
+`public/index.html` implémente le handoff de `design_handoff_winx_remote/`. Le
+rôle de Claude Code est de **le brancher sur l'API, pas de le redessiner**.
 
 - Ne pas modifier la palette, la typographie, la mise en page ni les gestes.
 - Ne pas extraire le CSS ou le JS dans des fichiers séparés sans le demander.
-- Le seul changement attendu au départ : passer `MOCK` de `true` à `false`.
 - Si un choix d'interface semble être un bug, le signaler avant de le corriger.
-  Plusieurs comportements sont délibérés : le premier appui sur un écran atténué
-  ne fait que réveiller, un appui de moins de 10 px n'est pas un glissement,
-  monter le volume sort automatiquement du mode muet.
+  Plusieurs comportements sont délibérés : un déplacement de moins de 3 px n'est
+  pas un glissement, le glissement pose le volume à la hauteur du doigt plutôt
+  que par incréments, monter le volume sort automatiquement du mode muet.
+- **Ne jamais afficher une commande qui ne peut pas aboutir.** Le sélecteur de
+  source est un indicateur, pas un choix : macOS n'expose qu'une seule session
+  de lecture. La barre de progression se masque quand la source ne publie ni
+  durée ni position, plutôt que de rester figée à zéro.
+- Deux écarts assumés avec le handoff : le pas des boutons est de 5 et non 4,
+  valeur validée à l'usage ; la police Outfit est embarquée dans `public/fonts/`
+  au lieu d'être chargée depuis Google Fonts, la télécommande devant
+  fonctionner sans accès à Internet.
 
 ## Méthode de travail
 

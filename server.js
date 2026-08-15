@@ -1,4 +1,4 @@
-/* Soft Remote — télécommande de volume, de lecture et d'écran pour un Mac.
+/* Winx Remote — télécommande de volume, de lecture et d'écran pour un Mac.
  * Copyright (C) 2026 Emmanuel Danan <emmanuel.danan@gmail.com>
  *
  * Distribué sous licence GNU General Public License, version 3 ou
