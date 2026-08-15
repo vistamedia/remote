@@ -171,3 +171,7 @@ GNU GPL v3 — voir [`LICENSE`](LICENSE).
 Conçue pour Elisa, par **Emmanuel Danan** — applications mobiles et web,
 interfaces, outils sur mesure. Une idée à concrétiser ?
 [emmanuel.danan@gmail.com](mailto:emmanuel.danan@gmail.com)
+
+<sub>Projet personnel, sans aucun lien avec la série *Winx Club* ni avec
+Rainbow SpA. Le nom vient de ma fille, qui en est fan ; l'icône et l'interface
+sont des créations originales.</sub>
