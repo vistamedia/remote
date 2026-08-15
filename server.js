@@ -244,7 +244,10 @@ async function handleApi(req, res, url) {
   try {
     if (req.method === "GET" && url.pathname === "/api/state") {
       const base = await audio.read();
-      await media.refresh();
+      /* Le média est rafraîchi sans être attendu : une lecture qui traîne
+         ne doit jamais retarder l'état du volume, qui est l'essentiel. Le
+         cache est reposé par le sondage deux secondes plus tard. */
+      media.refresh();
       return sendJson(res, 200, state.compose(base));
     }
     if (req.method === "GET" && url.pathname === "/api/events") {
