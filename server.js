@@ -20,6 +20,7 @@ const crypto = require("node:crypto");
 
 const audio = require("./lib/audio.js");
 const brightness = require("./lib/brightness.js");
+const fullscreen = require("./lib/fullscreen.js");
 const media = require("./lib/media.js");
 const display = require("./lib/display.js");
 const sse = require("./lib/sse.js");
@@ -270,6 +271,32 @@ async function handleMedia(req, res) {
   return sendJson(res, 200, result);
 }
 
+async function handleFullscreen(req, res) {
+  const body = await readBody(req);
+  let wanted;
+
+  if (body.toggle === true) {
+    wanted = null;
+  } else if (typeof body.active === "boolean") {
+    wanted = body.active;
+  } else {
+    throw new BadRequest("corps attendu : { toggle: true } ou { active }");
+  }
+
+  /* L'application au premier plan a pu changer depuis le dernier sondage :
+     on relit avant d'agir, plutôt que de piloter celle d'il y a deux
+     secondes. */
+  await fullscreen.refresh();
+  if (!fullscreen.isAvailable()) {
+    return sendJson(res, 503, { error: "aucune application pilotable au premier plan" });
+  }
+
+  await fullscreen.control(wanted);
+  const result = state.compose();
+  state.publish(result);
+  return sendJson(res, 200, result);
+}
+
 async function handleDisplay(req, res) {
   const body = await readBody(req);
   if (display.ACTIONS.indexOf(body.action) === -1) {
@@ -288,10 +315,12 @@ async function handleApi(req, res, url) {
   try {
     if (req.method === "GET" && url.pathname === "/api/state") {
       const base = await audio.read();
-      /* Le média est rafraîchi sans être attendu : une lecture qui traîne
-         ne doit jamais retarder l'état du volume, qui est l'essentiel. Le
-         cache est reposé par le sondage deux secondes plus tard. */
+      /* Le média et le plein écran sont rafraîchis sans être attendus : une
+         lecture qui traîne ne doit jamais retarder l'état du volume, qui est
+         l'essentiel. Les caches sont reposés par le sondage deux secondes
+         plus tard. */
       media.refresh();
+      fullscreen.refresh();
       return sendJson(res, 200, state.compose(base));
     }
     if (req.method === "GET" && url.pathname === "/api/events") {
@@ -310,6 +339,9 @@ async function handleApi(req, res, url) {
     }
     if (req.method === "POST" && url.pathname === "/api/media") {
       return await handleMedia(req, res);
+    }
+    if (req.method === "POST" && url.pathname === "/api/fullscreen") {
+      return await handleFullscreen(req, res);
     }
     if (req.method === "POST" && url.pathname === "/api/display") {
       return await handleDisplay(req, res);
@@ -381,6 +413,9 @@ const server = http.createServer((req, res) => {
 });
 
 Promise.all([audio.init(), brightness.init(), media.refresh()]).then(() => {
+  /* Le plein écran n'est pas lu au démarrage : il dépend de l'application au
+     premier plan, que le sondage relèvera dès qu'un client se connectera.
+     Le lire ici ne ferait que forker pour une valeur déjà périmée. */
   /* 0.0.0.0 est indispensable pour que l'iPhone joigne le Mac. Le pare-feu
      macOS demandera l'autorisation au premier lancement. */
   server.listen(PORT, "0.0.0.0", () => {
