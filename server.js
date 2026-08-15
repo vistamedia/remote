@@ -51,6 +51,41 @@ const TYPES = {
 /* Distingue une faute du client (400) d'une panne système (500). */
 class BadRequest extends Error {}
 
+/* ---------- périmètre réseau ---------- */
+
+/* Le serveur écoute sur toutes les interfaces, faute de quoi l'iPhone ne
+   pourrait pas le joindre. Mais il n'a aucune raison de répondre ailleurs
+   que sur le réseau domestique : sans ce filtre, emporter le MacBook dans
+   un café l'exposerait à tout le sous-réseau public.
+
+   La protection a une limite qu'il faut connaître : un réseau public
+   distribue lui aussi des adresses privées. Ce filtre supprime l'exposition
+   absurde, pas le voisin de table — c'est le token qui s'en charge. */
+function isLocalAddress(address) {
+  if (!address) return false;
+  let addr = String(address);
+
+  /* Node renvoie parfois une adresse IPv4 encapsulée en IPv6. */
+  if (addr.indexOf("::ffff:") === 0) addr = addr.slice(7);
+  if (addr === "::1") return true;
+
+  const v6 = addr.toLowerCase();
+  if (v6.indexOf("fe80:") === 0) return true;        // lien-local
+  if (/^f[cd][0-9a-f]{2}:/.test(v6)) return true;     // adresses uniques locales
+
+  const parts = addr.split(".");
+  if (parts.length !== 4) return false;
+  const n = parts.map(Number);
+  if (n.some(v => !Number.isInteger(v) || v < 0 || v > 255)) return false;
+
+  if (n[0] === 127) return true;                              // boucle locale
+  if (n[0] === 10) return true;                               // 10/8
+  if (n[0] === 172 && n[1] >= 16 && n[1] <= 31) return true;  // 172.16/12
+  if (n[0] === 192 && n[1] === 168) return true;              // 192.168/16
+  if (n[0] === 169 && n[1] === 254) return true;              // lien-local
+  return false;
+}
+
 /* ---------- token ---------- */
 
 /* Généré au premier lancement, conservé ensuite. Un token par machine :
@@ -276,6 +311,10 @@ function serveStatic(req, res, url) {
 /* ---------- serveur ---------- */
 
 const server = http.createServer((req, res) => {
+  if (!isLocalAddress(req.socket.remoteAddress)) {
+    return sendText(res, 403, "hors du réseau local");
+  }
+
   const url = new URL(req.url, "http://localhost");
   if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
     return handleApi(req, res, url);
