@@ -45,7 +45,8 @@ const TYPES = {
   ".json": "application/json; charset=utf-8",
   ".webmanifest": "application/manifest+json",
   ".png": "image/png",
-  ".svg": "image/svg+xml"
+  ".svg": "image/svg+xml",
+  ".woff2": "font/woff2"
 };
 
 /* Distingue une faute du client (400) d'une panne système (500). */
@@ -216,8 +217,20 @@ async function handleMedia(req, res) {
   }
 
   const body = await readBody(req);
+
+  /* Déplacement à une position absolue, en secondes. */
+  if (body.action === "seek") {
+    if (!Number.isFinite(body.position) || body.position < 0 || body.position > 86400) {
+      throw new BadRequest("position doit être un nombre de secondes de 0 à 86400");
+    }
+    await media.seek(body.position);
+    const apres = state.compose();
+    state.publish(apres);
+    return sendJson(res, 200, apres);
+  }
+
   if (MEDIA_ACTIONS.indexOf(body.action) === -1) {
-    throw new BadRequest("action attendue : playpause, next ou previous");
+    throw new BadRequest("action attendue : playpause, next, previous ou seek");
   }
 
   await media.control(body.action);
@@ -318,7 +331,15 @@ const server = http.createServer((req, res) => {
     return sendText(res, 403, "hors du réseau local");
   }
 
-  const url = new URL(req.url, "http://localhost");
+  /* Un chemin malformé suffisait à faire tomber le serveur : « // » est lu
+     comme le début d'une autorité sans hôte, et new URL lève. */
+  let url;
+  try {
+    url = new URL(req.url, "http://localhost");
+  } catch (e) {
+    return sendText(res, 400, "requête invalide");
+  }
+
   if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
     return handleApi(req, res, url);
   }

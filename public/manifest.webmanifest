@@ -1,20 +1,18 @@
 {
-  "name": "Soft Remote",
-  "short_name": "Soft Remote",
-  "description": "Télécommande de volume, de lecture et d'écran pour un Mac, depuis un iPhone, sur le réseau local.",
+  "name": "Winx Remote",
+  "short_name": "Winx Remote",
+  "description": "Télécommande de volume, de lecture et d'écran pour un Mac, pilotée depuis l'iPhone sur le réseau local.",
   "lang": "fr",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0B0A09",
-  "theme_color": "#0B0A09",
+  "background_color": "#150826",
+  "theme_color": "#180B2E",
   "icons": [
-    {
-      "src": "icon-180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-1a.svg", "sizes": "any", "type": "image/svg+xml" }
   ]
 }

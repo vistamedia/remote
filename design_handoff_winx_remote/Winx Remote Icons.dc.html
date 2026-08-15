@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#0B0616; font-family:'Outfit',system-ui,sans-serif; }
+  a { color:#FF6FB5; text-decoration:none; }
+  a:hover { color:#FFCF5C; }
+</style>
+</helmet>
+
+<section style="padding:64px; display:flex; flex-direction:column; gap:64px; color:#EDE4F7;">
+
+  <header style="display:flex; flex-direction:column; gap:14px; max-width:900px;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span style="font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:#B98BE0;">Tour 1</span>
+      <span style="height:1px; flex:1; background:#2B1B44;"></span>
+    </div>
+    <h1 style="margin:0; font-size:44px; font-weight:800; letter-spacing:-.02em;">Winx Remote — déclinaison d'icônes</h1>
+    <p style="margin:0; font-size:17px; line-height:1.6; color:#A794C0; text-wrap:pretty;">Six pistes originales, plates et géométriques, en rose fuchsia et violet. Marques déposées écartées : aucun personnage ni logo de la série. Dites-moi l'identifiant qui vous plaît (<a href="#1a">1a</a> → <a href="#1f">1f</a>) et je le décline en 192 / 512 / maskable.</p>
+  </header>
+
+  <div style="display:flex; flex-wrap:wrap; gap:36px;">
+
+    <div id="1a" style="display:flex; flex-direction:column; gap:14px; width:260px;">
+      <div style="width:260px; height:260px; border-radius:58px; position:relative; background:#180B2E; overflow:hidden; display:grid; place-items:center;">
+        <svg viewBox="0 0 512 512" width="260" height="260" aria-label="Ailes et play">
+          <g stroke="#180B2E" stroke-width="10">
+            <polygon points="216,296 152,112 56,64 38,186 136,266" fill="#FFB3D9"></polygon>
+            <polygon points="216,296 152,112 114,128 164,264" fill="#FF2D95"></polygon>
+            <polygon points="216,304 124,302 46,354 114,420 198,344" fill="#8B36E8"></polygon>
+            <polygon points="296,296 360,112 456,64 474,186 376,266" fill="#FFB3D9"></polygon>
+            <polygon points="296,296 360,112 398,128 348,264" fill="#FF2D95"></polygon>
+            <polygon points="296,304 388,302 466,354 398,420 314,344" fill="#8B36E8"></polygon>
+          </g>
+          <polygon points="220,170 220,346 356,258" fill="#FFF4FA"></polygon>
+        </svg>
+        <sc-if value="{{ showSafeZone }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;"><div style="width:80%; height:80%; border-radius:50%; border:2px dashed #35F5D6;"></div></div></sc-if>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:.14em; color:#0B0616; background:#FF2D95; padding:4px 9px; border-radius:6px;">1A</span>
+        <span style="font-size:15px; font-weight:600;">Envol</span>
+      </div>
+      <p style="margin:0; font-size:13px; line-height:1.55; color:#8E7CA8;">Ailes anguleuses en deux tons, play blanc au centre. La plus lisible en petit format.</p>
+    </div>
+
+    <div id="1b" style="display:flex; flex-direction:column; gap:14px; width:260px;">
+      <div style="width:260px; height:260px; border-radius:58px; position:relative; background:#FF2D95; overflow:hidden; display:grid; place-items:center;">
+        <svg viewBox="0 0 512 512" width="260" height="260" aria-label="Play ailé">
+          <polygon points="150,112 150,400 288,256" fill="#2A0A3F"></polygon>
+          <g>
+            <polygon points="306,232 470,124 414,206 336,232" fill="#FFF4FA"></polygon>
+            <polygon points="306,248 490,244 412,276 336,266" fill="#FFCF5C"></polygon>
+            <polygon points="306,282 470,388 414,306 336,282" fill="#8B36E8"></polygon>
+          </g>
+        </svg>
+        <sc-if value="{{ showSafeZone }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;"><div style="width:80%; height:80%; border-radius:50%; border:2px dashed #35F5D6;"></div></div></sc-if>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:.14em; color:#0B0616; background:#FF2D95; padding:4px 9px; border-radius:6px;">1B</span>
+        <span style="font-size:15px; font-weight:600;">Sillage</span>
+      </div>
+      <p style="margin:0; font-size:13px; line-height:1.55; color:#8E7CA8;">Le play émet trois éclats : le geste « lancer la lecture » devient un sort.</p>
+    </div>
+
+    <div id="1c" style="display:flex; flex-direction:column; gap:14px; width:260px;">
+      <div style="width:260px; height:260px; border-radius:58px; position:relative; background:#150826; overflow:hidden; display:grid; place-items:center;">
+        <svg viewBox="0 0 512 512" width="260" height="260" aria-label="Télécommande ailée">
+          <g stroke="#150826" stroke-width="10">
+            <polygon points="196,240 96,140 84,232" fill="#8B36E8"></polygon>
+            <polygon points="196,272 84,300 104,364" fill="#FF2D95"></polygon>
+            <polygon points="316,240 416,140 428,232" fill="#8B36E8"></polygon>
+            <polygon points="316,272 428,300 408,364" fill="#FF2D95"></polygon>
+          </g>
+          <rect x="196" y="112" width="120" height="288" rx="48" fill="#FFF4FA"></rect>
+          <polygon points="238,196 238,268 298,232" fill="#FF2D95"></polygon>
+          <rect x="228" y="304" width="56" height="12" rx="6" fill="#C9B6DE"></rect>
+          <rect x="228" y="336" width="56" height="12" rx="6" fill="#C9B6DE"></rect>
+        </svg>
+        <sc-if value="{{ showSafeZone }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;"><div style="width:80%; height:80%; border-radius:50%; border:2px dashed #35F5D6;"></div></div></sc-if>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:.14em; color:#0B0616; background:#FF2D95; padding:4px 9px; border-radius:6px;">1C</span>
+        <span style="font-size:15px; font-weight:600;">Télécommande enchantée</span>
+      </div>
+      <p style="margin:0; font-size:13px; line-height:1.55; color:#8E7CA8;">Explicite sur la fonction. Détails à surveiller en 32 px.</p>
+    </div>
+
+    <div id="1d" style="display:flex; flex-direction:column; gap:14px; width:260px;">
+      <div style="width:260px; height:260px; border-radius:58px; position:relative; background:#8B36E8; overflow:hidden; display:grid; place-items:center;">
+        <svg viewBox="0 0 512 512" width="260" height="260" aria-label="Éclat magique">
+          <polygon points="256,72 292,220 440,256 292,292 256,440 220,292 72,256 220,220" fill="#FFF4FA"></polygon>
+          <polygon points="256,150 274,238 362,256 274,274 256,362 238,274 150,256 238,238" fill="#FF2D95"></polygon>
+          <polygon points="243,222 243,290 296,256" fill="#FFF4FA"></polygon>
+          <circle cx="400" cy="130" r="16" fill="#FFCF5C"></circle>
+          <circle cx="122" cy="382" r="11" fill="#FFCF5C"></circle>
+        </svg>
+        <sc-if value="{{ showSafeZone }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;"><div style="width:80%; height:80%; border-radius:50%; border:2px dashed #35F5D6;"></div></div></sc-if>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:.14em; color:#0B0616; background:#FF2D95; padding:4px 9px; border-radius:6px;">1D</span>
+        <span style="font-size:15px; font-weight:600;">Éclat</span>
+      </div>
+      <p style="margin:0; font-size:13px; line-height:1.55; color:#8E7CA8;">Étoile à quatre branches, play niché au cœur. Très net à toutes les tailles.</p>
+    </div>
+
+    <div id="1e" style="display:flex; flex-direction:column; gap:14px; width:260px;">
+      <div style="width:260px; height:260px; border-radius:58px; position:relative; background:#FFF4FA; overflow:hidden; display:grid; place-items:center;">
+        <svg viewBox="0 0 512 512" width="260" height="260" aria-label="Blason ailé">
+          <g stroke="#FFF4FA" stroke-width="10">
+            <polygon points="256,392 132,148 84,214" fill="#FF2D95"></polygon>
+            <polygon points="256,392 84,214 96,300" fill="#8B36E8"></polygon>
+            <polygon points="256,392 380,148 428,214" fill="#FF2D95"></polygon>
+            <polygon points="256,392 428,214 416,300" fill="#8B36E8"></polygon>
+          </g>
+          <circle cx="256" cy="196" r="66" fill="#2A0A3F"></circle>
+          <polygon points="238,166 238,226 288,196" fill="#FFCF5C"></polygon>
+        </svg>
+        <sc-if value="{{ showSafeZone }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;"><div style="width:80%; height:80%; border-radius:50%; border:2px dashed #35F5D6;"></div></div></sc-if>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:.14em; color:#0B0616; background:#FF2D95; padding:4px 9px; border-radius:6px;">1E</span>
+        <span style="font-size:15px; font-weight:600;">Blason</span>
+      </div>
+      <p style="margin:0; font-size:13px; line-height:1.55; color:#8E7CA8;">Fond clair, à l'aise entre les icônes sombres de l'écran d'accueil.</p>
+    </div>
+
+    <div id="1f" style="display:flex; flex-direction:column; gap:14px; width:260px;">
+      <div style="width:260px; height:260px; border-radius:58px; position:relative; background:#180B2E; overflow:hidden; display:grid; place-items:center;">
+        <svg viewBox="0 0 512 512" width="260" height="260" aria-label="Ailes papillon">
+          <g stroke="#180B2E" stroke-width="10">
+            <polygon points="252,256 108,96 76,206 200,262" fill="#FF2D95"></polygon>
+            <polygon points="252,256 96,318 148,414 236,300" fill="#8B36E8"></polygon>
+            <polygon points="260,256 404,96 436,206 312,262" fill="#FF6FB5"></polygon>
+            <polygon points="260,256 416,318 364,414 276,300" fill="#6C1FC4"></polygon>
+          </g>
+          <polygon points="256,142 292,256 256,370 220,256" fill="#FFCF5C"></polygon>
+          <polygon points="243,226 243,286 293,256" fill="#180B2E"></polygon>
+        </svg>
+        <sc-if value="{{ showSafeZone }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;"><div style="width:80%; height:80%; border-radius:50%; border:2px dashed #35F5D6;"></div></div></sc-if>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:.14em; color:#0B0616; background:#FF2D95; padding:4px 9px; border-radius:6px;">1F</span>
+        <span style="font-size:15px; font-weight:600;">Papillon</span>
+      </div>
+      <p style="margin:0; font-size:13px; line-height:1.55; color:#8E7CA8;">Quatre ailes anguleuses, losange d'or au centre. Le plus décoratif.</p>
+    </div>
+  </div>
+
+  <div style="height:1px; background:#2B1B44;"></div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:56px; align-items:flex-start;">
+
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <h2 style="margin:0; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:#B98BE0; font-weight:600;">Favicon &amp; monochrome — 1A</h2>
+      <div style="display:flex; align-items:flex-end; gap:24px;">
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+          <div style="width:64px; height:64px; border-radius:15px; background:#180B2E; display:grid; place-items:center;">
+            <svg viewBox="0 0 512 512" width="64" height="64">
+              <g stroke="#180B2E" stroke-width="14">
+                <polygon points="216,296 152,112 56,64 38,186 136,266" fill="#FFB3D9"></polygon>
+                <polygon points="216,296 152,112 114,128 164,264" fill="#FF2D95"></polygon>
+                <polygon points="216,304 124,302 46,354 114,420 198,344" fill="#8B36E8"></polygon>
+                <polygon points="296,296 360,112 456,64 474,186 376,266" fill="#FFB3D9"></polygon>
+                <polygon points="296,296 360,112 398,128 348,264" fill="#FF2D95"></polygon>
+                <polygon points="296,304 388,302 466,354 398,420 314,344" fill="#8B36E8"></polygon>
+              </g>
+              <polygon points="220,170 220,346 356,258" fill="#FFF4FA"></polygon>
+            </svg>
+          </div>
+          <span style="font-size:11px; color:#8E7CA8;">64</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+          <div style="width:32px; height:32px; border-radius:8px; background:#180B2E; display:grid; place-items:center;">
+            <svg viewBox="0 0 512 512" width="32" height="32">
+              <g stroke="#180B2E" stroke-width="24">
+                <polygon points="216,296 152,112 56,64 38,186 136,266" fill="#FFB3D9"></polygon>
+                <polygon points="216,296 152,112 114,128 164,264" fill="#FF2D95"></polygon>
+                <polygon points="216,304 124,302 46,354 114,420 198,344" fill="#8B36E8"></polygon>
+                <polygon points="296,296 360,112 456,64 474,186 376,266" fill="#FFB3D9"></polygon>
+                <polygon points="296,296 360,112 398,128 348,264" fill="#FF2D95"></polygon>
+                <polygon points="296,304 388,302 466,354 398,420 314,344" fill="#8B36E8"></polygon>
+              </g>
+              <polygon points="220,170 220,346 356,258" fill="#FFF4FA"></polygon>
+            </svg>
+          </div>
+          <span style="font-size:11px; color:#8E7CA8;">32</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+          <div style="width:16px; height:16px; border-radius:4px; background:#180B2E; display:grid; place-items:center;">
+            <svg viewBox="0 0 512 512" width="16" height="16">
+              <g stroke="#180B2E" stroke-width="34">
+                <polygon points="216,296 152,112 56,64 38,186 136,266" fill="#FFB3D9"></polygon>
+                <polygon points="216,296 152,112 114,128 164,264" fill="#FF2D95"></polygon>
+                <polygon points="216,304 124,302 46,354 114,420 198,344" fill="#8B36E8"></polygon>
+                <polygon points="296,296 360,112 456,64 474,186 376,266" fill="#FFB3D9"></polygon>
+                <polygon points="296,296 360,112 398,128 348,264" fill="#FF2D95"></polygon>
+                <polygon points="296,304 388,302 466,354 398,420 314,344" fill="#8B36E8"></polygon>
+              </g>
+              <polygon points="220,170 220,346 356,258" fill="#FFF4FA"></polygon>
+            </svg>
+          </div>
+          <span style="font-size:11px; color:#8E7CA8;">16</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+          <div style="width:64px; height:64px; border-radius:15px; background:#EDE4F7; display:grid; place-items:center;">
+            <svg viewBox="0 0 512 512" width="64" height="64">
+              <g stroke="#EDE4F7" stroke-width="14" fill="#241038">
+                <polygon points="216,296 152,112 56,64 38,186 136,266"></polygon>
+                <polygon points="216,296 152,112 114,128 164,264"></polygon>
+                <polygon points="216,304 124,302 46,354 114,420 198,344"></polygon>
+                <polygon points="296,296 360,112 456,64 474,186 376,266"></polygon>
+                <polygon points="296,296 360,112 398,128 348,264"></polygon>
+                <polygon points="296,304 388,302 466,354 398,420 314,344"></polygon>
+              </g>
+              <polygon points="220,170 220,346 356,258" fill="#EDE4F7"></polygon>
+            </svg>
+          </div>
+          <span style="font-size:11px; color:#8E7CA8;">Mono</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <h2 style="margin:0; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:#B98BE0; font-weight:600;">Sur l'écran d'accueil</h2>
+      <div style="width:300px; height:420px; border-radius:44px; background:linear-gradient(#2C1A46,#150826); padding:22px; box-sizing:border-box; display:flex; flex-direction:column; gap:26px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:#C9B6DE;">
+          <span>9:41</span><span>􀙇</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:20px 18px;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="width:54px; height:54px; border-radius:13px; background:#3A2A52;"></div>
+            <span style="font-size:9px; color:#D6C9E6;">Photos</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="width:54px; height:54px; border-radius:13px; background:#3A2A52;"></div>
+            <span style="font-size:9px; color:#D6C9E6;">Musique</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="width:54px; height:54px; border-radius:13px; background:#180B2E; display:grid; place-items:center;">
+              <svg viewBox="0 0 512 512" width="54" height="54">
+                <g stroke="#180B2E" stroke-width="16">
+                  <polygon points="216,296 152,112 56,64 38,186 136,266" fill="#FFB3D9"></polygon>
+                  <polygon points="216,296 152,112 114,128 164,264" fill="#FF2D95"></polygon>
+                  <polygon points="216,304 124,302 46,354 114,420 198,344" fill="#8B36E8"></polygon>
+                  <polygon points="296,296 360,112 456,64 474,186 376,266" fill="#FFB3D9"></polygon>
+                  <polygon points="296,296 360,112 398,128 348,264" fill="#FF2D95"></polygon>
+                  <polygon points="296,304 388,302 466,354 398,420 314,344" fill="#8B36E8"></polygon>
+                </g>
+                <polygon points="220,170 220,346 356,258" fill="#FFF4FA"></polygon>
+              </svg>
+            </div>
+            <span style="font-size:9px; color:#FFF4FA; font-weight:600;">Winx Remote</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="width:54px; height:54px; border-radius:13px; background:#3A2A52;"></div>
+            <span style="font-size:9px; color:#D6C9E6;">Réglages</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="width:54px; height:54px; border-radius:13px; background:#3A2A52;"></div>
+            <span style="font-size:9px; color:#D6C9E6;">Notes</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="width:54px; height:54px; border-radius:13px; background:#3A2A52;"></div>
+            <span style="font-size:9px; color:#D6C9E6;">Plans</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="width:54px; height:54px; border-radius:13px; background:#3A2A52;"></div>
+            <span style="font-size:9px; color:#D6C9E6;">Appareil</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div style="width:54px; height:54px; border-radius:13px; background:#3A2A52;"></div>
+            <span style="font-size:9px; color:#D6C9E6;">Horloge</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <h2 style="margin:0; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:#B98BE0; font-weight:600;">Splash screen PWA</h2>
+      <div style="width:300px; height:640px; border-radius:44px; background:#150826; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:34px; position:relative; overflow:hidden;">
+        <div style="position:absolute; width:420px; height:420px; border-radius:50%; background:#2A0F4A;"></div>
+        <div style="position:absolute; width:260px; height:260px; border-radius:50%; background:#3A1560;"></div>
+        <svg viewBox="0 0 512 512" width="150" height="150" style="position:relative;">
+          <g stroke="#3A1560" stroke-width="10">
+            <polygon points="216,296 152,112 56,64 38,186 136,266" fill="#FFB3D9"></polygon>
+            <polygon points="216,296 152,112 114,128 164,264" fill="#FF2D95"></polygon>
+            <polygon points="216,304 124,302 46,354 114,420 198,344" fill="#8B36E8"></polygon>
+            <polygon points="296,296 360,112 456,64 474,186 376,266" fill="#FFB3D9"></polygon>
+            <polygon points="296,296 360,112 398,128 348,264" fill="#FF2D95"></polygon>
+            <polygon points="296,304 388,302 466,354 398,420 314,344" fill="#8B36E8"></polygon>
+          </g>
+          <polygon points="220,170 220,346 356,258" fill="#FFF4FA"></polygon>
+        </svg>
+        <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <span style="font-size:26px; font-weight:800; letter-spacing:-.01em; color:#FFF4FA;">Winx Remote</span>
+          <span style="font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:#C08CFF;">la télécommande magique</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <h2 style="margin:0; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:#B98BE0; font-weight:600;">L'icône en contexte dans l'app</h2>
+      <div style="width:300px; height:640px; border-radius:44px; background:#150826; padding:26px 22px; box-sizing:border-box; display:flex; flex-direction:column; gap:26px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:34px; height:34px; border-radius:9px; background:#180B2E; display:grid; place-items:center;">
+            <svg viewBox="0 0 512 512" width="34" height="34">
+              <g stroke="#180B2E" stroke-width="20">
+                <polygon points="216,296 152,112 56,64 38,186 136,266" fill="#FFB3D9"></polygon>
+                <polygon points="216,296 152,112 114,128 164,264" fill="#FF2D95"></polygon>
+                <polygon points="216,304 124,302 46,354 114,420 198,344" fill="#8B36E8"></polygon>
+                <polygon points="296,296 360,112 456,64 474,186 376,266" fill="#FFB3D9"></polygon>
+                <polygon points="296,296 360,112 398,128 348,264" fill="#FF2D95"></polygon>
+                <polygon points="296,304 388,302 466,354 398,420 314,344" fill="#8B36E8"></polygon>
+              </g>
+              <polygon points="220,170 220,346 356,258" fill="#FFF4FA"></polygon>
+            </svg>
+          </div>
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:14px; font-weight:600; color:#FFF4FA;">Winx Remote</span>
+            <span style="font-size:10px; color:#9C86B8;">connectée au Mac du salon</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <span style="flex:1; text-align:center; font-size:11px; font-weight:600; color:#150826; background:#FF2D95; padding:9px 0; border-radius:999px;">Netflix</span>
+          <span style="flex:1; text-align:center; font-size:11px; color:#C9B6DE; background:#251239; padding:9px 0; border-radius:999px;">Prime Video</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="height:118px; border-radius:16px; background:#251239;"></div>
+          <span style="font-size:13px; font-weight:600; color:#FFF4FA;">Épisode 4 — La flamme du dragon</span>
+          <span style="font-size:10px; color:#9C86B8;">Saison 2</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="height:5px; border-radius:3px; background:#38214F; position:relative;">
+            <div style="position:absolute; inset:0 62% 0 0; border-radius:3px; background:#FF2D95;"></div>
+            <div style="position:absolute; left:38%; top:-4px; width:13px; height:13px; border-radius:50%; background:#FFF4FA;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:#9C86B8;">
+            <span>16:12</span><span>-26:04</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:22px;">
+          <span style="width:52px; height:52px; border-radius:50%; background:#251239; display:grid; place-items:center; font-size:11px; color:#D6C9E6;">−10</span>
+          <span style="width:76px; height:76px; border-radius:50%; background:#FF2D95; display:grid; place-items:center;">
+            <svg viewBox="0 0 24 24" width="26" height="26"><rect x="6" y="4" width="4" height="16" fill="#150826"></rect><rect x="14" y="4" width="4" height="16" fill="#150826"></rect></svg>
+          </span>
+          <span style="width:52px; height:52px; border-radius:50%; background:#251239; display:grid; place-items:center; font-size:11px; color:#D6C9E6;">+10</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; margin-top:auto;">
+          <span style="font-size:11px; color:#9C86B8;">Vol</span>
+          <div style="flex:1; height:5px; border-radius:3px; background:#38214F; position:relative;">
+            <div style="position:absolute; inset:0 30% 0 0; border-radius:3px; background:#C08CFF;"></div>
+          </div>
+          <span style="font-size:11px; color:#C9B6DE;">70</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showSafeZone&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Contrôles&quot;,&quot;label&quot;:&quot;Afficher la zone sûre (maskable)&quot;}}"></script>
+</body>
+</html>
