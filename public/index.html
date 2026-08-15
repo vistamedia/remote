@@ -70,9 +70,29 @@
 
   #status{
     height:54px;flex:none;
-    display:flex;align-items:center;justify-content:flex-end;
+    display:flex;align-items:center;justify-content:space-between;
     padding:0 30px;
   }
+
+  /* Sélecteur de grandeur réglée par le grand curseur. Contrairement à
+     #sources, qui n'est qu'un indicateur, celui-ci est un vrai choix : d'où
+     une apparence délibérément distincte, en icônes seules, pour ne pas
+     donner à deux composants la même forme et deux comportements. */
+  #modes{
+    display:flex;gap:4px;background:var(--indigo-700);
+    padding:4px;border-radius:999px;
+  }
+  #modes button{
+    width:46px;height:38px;display:grid;place-items:center;
+    border-radius:999px;color:var(--mauve-500);
+    transition:background .2s ease,color .2s ease;
+  }
+  #modes button svg{width:19px;height:19px}
+  #modes button.on{background:var(--fuchsia);color:var(--indigo-800)}
+  #modes button.on[data-mode="brightness"]{background:var(--gold)}
+  /* Masqué quand DisplayServices ne répond pas : sans luminosité pilotable,
+     le sélecteur n'aurait qu'une seule option. */
+  #modes.hidden{display:none}
   #link{
     display:flex;align-items:center;gap:8px;
     font-size:11px;letter-spacing:.1em;text-transform:uppercase;
@@ -125,6 +145,10 @@
     background:linear-gradient(var(--fuchsia),var(--violet));
     transition:height .12s ease-out;
   }
+  /* Le mode luminosité vire à l'or, déjà la couleur de l'écran dans la
+     palette. Les deux modes restent discernables du coin de l'œil, sans
+     avoir à lire le libellé. */
+  #stage.brightness #fill{background:linear-gradient(var(--gold),var(--fuchsia))}
   #stage .layer{
     position:absolute;inset:0;
     display:flex;flex-direction:column;align-items:center;justify-content:space-between;
@@ -138,6 +162,12 @@
   #up:active{background:rgba(255,255,255,.12)}
   #down{color:#F4E9FA}
   #down:active{background:rgba(0,0,0,.16)}
+  /* Le remplissage doré est clair, là où le fuchsia et le violet sont
+     sombres : posés dessus, les signes + et − s'effacent. Un disque
+     translucide les détache, et reste invisible sur le fond indigo quand la
+     luminosité est basse — les deux fonds sont donc couverts sans changer de
+     couleur en cours de glissement. */
+  #stage.brightness .step{background:rgba(14,6,32,.3);color:var(--white)}
   .readout{
     display:flex;flex-direction:column;align-items:center;gap:2px;
     pointer-events:none;
@@ -274,6 +304,18 @@
 <div id="app">
 
   <div id="status">
+    <div id="modes" class="hidden">
+      <button data-mode="volume" class="on" aria-label="Régler le volume" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9h3l5-4v14l-5-4H4z"/></svg>
+      </button>
+      <button data-mode="brightness" aria-label="Régler la luminosité" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" fill="currentColor"/>
+          <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
+    </div>
     <span id="link">connecté</span>
   </div>
 
@@ -396,10 +438,19 @@ const meta     = document.querySelector(".meta");
 const muteBtn  = document.getElementById("mute");
 const screenBtn= document.getElementById("screen");
 const playIcon = document.querySelector("#play svg");
+const modes    = document.getElementById("modes");
+const upBtn    = document.getElementById("up");
+const downBtn  = document.getElementById("down");
 const nums     = document.querySelectorAll("[data-num]");
 const caps     = document.querySelectorAll("[data-cap]");
 
+/* Grandeur réglée par le grand curseur : « volume » ou « brightness ». Le
+   geste, les boutons + et − et le throttle sont partagés, seule la
+   destination change. */
+let mode = "volume";
+
 let volume = 38, muted = false, playing = false;
+let brightness = 50, brightnessOk = false;
 let duration = null, elapsed = null, sourceName = null;
 let title = null, artist = null;
 let screenOff = false;
@@ -416,10 +467,25 @@ function fmt(sec) {
 }
 
 function render() {
-  const shown = muted ? 0 : Math.round(volume);
+  /* Sans luminosité pilotable, le sélecteur disparaît et le curseur revient
+     au volume : on n'affiche jamais une commande qui ne peut pas aboutir. */
+  if (!brightnessOk && mode !== "volume") mode = "volume";
+  modes.classList.toggle("hidden", !brightnessOk);
+  modes.querySelectorAll("button").forEach(b => {
+    const on = b.dataset.mode === mode;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
+
+  const isVolume = mode === "volume";
+  stage.classList.toggle("brightness", !isVolume);
+
+  const shown = isVolume ? (muted ? 0 : Math.round(volume)) : Math.round(brightness);
   document.documentElement.style.setProperty("--fill", shown + "%");
-  nums.forEach(n => { n.textContent = shown; n.classList.toggle("muted", muted); });
-  caps.forEach(c => c.textContent = muted ? "Sourdine" : "Volume");
+  nums.forEach(n => { n.textContent = shown; n.classList.toggle("muted", isVolume && muted); });
+  caps.forEach(c => c.textContent = isVolume ? (muted ? "Sourdine" : "Volume") : "Luminosité");
+  upBtn.setAttribute("aria-label", isVolume ? "Monter le volume" : "Augmenter la luminosité");
+  downBtn.setAttribute("aria-label", isVolume ? "Baisser le volume" : "Réduire la luminosité");
   muteBtn.classList.toggle("on", muted);
 
   playIcon.innerHTML = playing
@@ -472,6 +538,18 @@ function setVolume(v) {
   queue();
 }
 
+function setBrightness(v) {
+  brightness = Math.min(100, Math.max(0, v));
+  render();
+  queue();
+}
+
+/* Applique une valeur absolue à la grandeur en cours de réglage. */
+function setCurrent(v) {
+  if (mode === "volume") setVolume(v);
+  else setBrightness(v);
+}
+
 /* ---------- réseau ---------- */
 
 async function send(path, body) {
@@ -497,6 +575,14 @@ function apply(s) {
   if (Date.now() < guardUntil) return;
   if (Math.abs(s.volume - volume) > 3) volume = s.volume;  // tolérance d'arrondi macOS
   muted = s.muted;
+
+  brightnessOk = s.brightnessControllable !== false && typeof s.brightness === "number";
+  /* Tolérance de 1 là où le volume en tolère 3 : la relecture de la
+     luminosité est exacte, et les crans du clavier du Mac valent environ six
+     points. Les élargir masquerait les changements venus de la machine. */
+  if (typeof s.brightness === "number" && Math.abs(s.brightness - brightness) > 1) {
+    brightness = s.brightness;
+  }
   const m = s.media || {};
   playing = Boolean(m.playing);
   title = m.title || null;
@@ -525,17 +611,21 @@ async function refresh() {
 }
 
 /* Throttle 80 ms, envoi final garanti. Le serveur ne garde que la dernière
-   valeur : on remplace, on n'empile pas. */
-let pending = null, sendTimer = null;
+   valeur : on remplace, on n'empile pas. Le mode est retenu avec la valeur,
+   faute de quoi une bascule pendant le throttle enverrait la luminosité sur
+   la route du volume. */
+let pending = null, pendingMode = null, sendTimer = null;
 function queue() {
-  pending = Math.round(volume);
+  pendingMode = mode;
+  pending = Math.round(mode === "volume" ? volume : brightness);
   if (sendTimer) return;
   sendTimer = setTimeout(() => { sendTimer = null; flush(); }, 80);
 }
 function flush() {
   if (pending === null) return;
-  send("/volume", { value: pending });
+  send(pendingMode === "volume" ? "/volume" : "/brightness", { value: pending });
   pending = null;
+  pendingMode = null;
 }
 
 /* La position n'est republiée qu'aux changements d'état. Entre deux, on la
@@ -551,7 +641,7 @@ setInterval(() => {
 
 let dragging = false, startY = 0, moved = false;
 
-function volumeAt(clientY) {
+function valueAt(clientY) {
   const r = stage.getBoundingClientRect();
   return Math.round((1 - (clientY - r.top) / r.height) * 100);
 }
@@ -568,7 +658,7 @@ stage.addEventListener("pointermove", e => {
   if (!dragging) return;
   if (!moved && Math.abs(e.clientY - startY) <= DRAG) return;
   moved = true;
-  setVolume(volumeAt(e.clientY));
+  setCurrent(valueAt(e.clientY));
 });
 
 function endDrag() { if (dragging) { dragging = false; flush(); } }
@@ -577,8 +667,22 @@ stage.addEventListener("pointercancel", endDrag);
 
 /* ---------- commandes ---------- */
 
-document.getElementById("up").onclick   = () => setVolume(Math.round(volume) + STEP);
-document.getElementById("down").onclick = () => setVolume(Math.round(volume) - STEP);
+function stepBy(delta) {
+  setCurrent(Math.round(mode === "volume" ? volume : brightness) + delta);
+}
+upBtn.onclick   = () => stepBy(STEP);
+downBtn.onclick = () => stepBy(-STEP);
+
+modes.querySelectorAll("button").forEach(b => {
+  b.onclick = () => {
+    if (b.dataset.mode === mode) return;
+    /* Une valeur peut attendre le throttle : elle appartient à la grandeur
+       qu'on quitte et doit partir avant la bascule. */
+    flush();
+    mode = b.dataset.mode;
+    render();
+  };
+});
 
 muteBtn.onclick = () => {
   muted = !muted;
