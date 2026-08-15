@@ -243,12 +243,26 @@
   #mute.on{background:var(--gold)}
   #mute.on svg{fill:var(--indigo-800)}
   #screen{
-    flex:1;height:52px;display:grid;place-items:center;
+    flex:1;min-width:0;height:52px;display:grid;place-items:center;
     border-radius:26px;border:1px solid var(--indigo-500);
     color:var(--mauve-500);
     font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    text-align:center;line-height:1.25;
   }
   #screen.off{border-color:var(--gold);color:var(--gold)}
+
+  /* Même forme que la sourdine, en miroir de l'autre côté du bouton
+     d'écran. Doré quand le plein écran est actif, comme la sourdine et
+     l'écran éteint : dans cette palette, l'or signale ce qui est en cours. */
+  #fullscreen{
+    width:52px;height:52px;flex:none;display:grid;place-items:center;
+    border-radius:50%;background:var(--indigo-700);
+  }
+  #fullscreen svg{width:20px;height:20px;fill:#EDE4F7}
+  #fullscreen.on{background:var(--gold)}
+  #fullscreen.on svg{fill:var(--indigo-800)}
+  /* Masqué dès qu'aucune application pilotable n'est au premier plan. */
+  #fullscreen.hidden{display:none}
 
   /* ---------- voile écran éteint ---------- */
 
@@ -389,6 +403,11 @@
         <svg viewBox="0 0 24 24"><path d="M4 9h3l5-4v14l-5-4H4z"/></svg>
       </button>
       <button id="screen">Éteindre l’écran du Mac</button>
+      <button id="fullscreen" class="hidden" aria-label="Plein écran" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 0h2v5h-5v-2h3v-3z"/>
+        </svg>
+      </button>
     </div>
   </footer>
 
@@ -441,6 +460,7 @@ const playIcon = document.querySelector("#play svg");
 const modes    = document.getElementById("modes");
 const upBtn    = document.getElementById("up");
 const downBtn  = document.getElementById("down");
+const fsBtn    = document.getElementById("fullscreen");
 const nums     = document.querySelectorAll("[data-num]");
 const caps     = document.querySelectorAll("[data-cap]");
 
@@ -451,6 +471,10 @@ let mode = "volume";
 
 let volume = 38, muted = false, playing = false;
 let brightness = 50, brightnessOk = false;
+/* « active » reste nul sur les applications qui ne publient pas leur plein
+   écran — un navigateur, dont la vidéo est en plein écran sans que la
+   fenêtre le soit. Le bouton reste alors neutre plutôt que de trancher. */
+let fullscreenOk = false, fullscreenActive = null;
 let duration = null, elapsed = null, sourceName = null;
 let title = null, artist = null;
 let screenOff = false;
@@ -521,6 +545,12 @@ function render() {
     document.getElementById("remain").textContent = "-" + fmt(duration - elapsed);
   }
 
+  fsBtn.classList.toggle("hidden", !fullscreenOk);
+  fsBtn.classList.toggle("on", fullscreenActive === true);
+  fsBtn.setAttribute("aria-pressed", String(fullscreenActive === true));
+  fsBtn.setAttribute("aria-label",
+    fullscreenActive === true ? "Quitter le plein écran" : "Plein écran");
+
   veil.classList.toggle("shown", screenOff);
   screenBtn.classList.toggle("off", screenOff);
   screenBtn.textContent = screenOff ? "Rallumer l’écran du Mac" : "Éteindre l’écran du Mac";
@@ -583,6 +613,10 @@ function apply(s) {
   if (typeof s.brightness === "number" && Math.abs(s.brightness - brightness) > 1) {
     brightness = s.brightness;
   }
+
+  const f = s.fullscreen || {};
+  fullscreenOk = Boolean(f.available);
+  fullscreenActive = typeof f.active === "boolean" ? f.active : null;
   const m = s.media || {};
   playing = Boolean(m.playing);
   title = m.title || null;
@@ -718,6 +752,35 @@ document.getElementById("seek").addEventListener("pointerdown", e => {
   const r = e.currentTarget.getBoundingClientRect();
   seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration);
 });
+
+/* Le plein écran ne s'affiche pas de façon optimiste. Le serveur relit
+   l'application après avoir écrit — VLC accepte parfois sans appliquer — et
+   sa réponse est donc plus sûre qu'une anticipation. On l'applique sans
+   passer par la fenêtre de garde, qui n'existe que pour protéger
+   l'affichage optimiste du volume. */
+fsBtn.onclick = async () => {
+  try {
+    const r = await fetch("/api/fullscreen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Token": TOKEN },
+      body: JSON.stringify({ toggle: true })
+    });
+    /* 503 : plus aucune application pilotable au premier plan. Le serveur va
+       bien, c'est le bouton qui n'a plus lieu d'être. */
+    if (r.status === 503) {
+      fullscreenOk = false;
+      render();
+      return online(true);
+    }
+    if (!r.ok) throw new Error(r.status);
+    const s = await r.json();
+    const f = s.fullscreen || {};
+    fullscreenOk = Boolean(f.available);
+    fullscreenActive = typeof f.active === "boolean" ? f.active : null;
+    render();
+    online(true);
+  } catch { online(false); }
+};
 
 function toggleScreen() {
   screenOff = !screenOff;
