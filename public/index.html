@@ -232,6 +232,33 @@
   #veil .head{font-size:22px;font-weight:600;color:var(--white)}
   #veil .note{font-size:12px;color:#8B6FA8}
 
+  /* ---------- écran de lancement ---------- */
+
+  /* iOS n'affiche un vrai splash natif que si on lui fournit une image par
+     résolution d'appareil. Celui-ci est dessiné par la page : il couvre
+     l'interface le temps que le premier état arrive, puis s'efface. */
+  #splash{
+    position:fixed;inset:0;z-index:10;
+    background:var(--indigo-800);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:34px;overflow:hidden;
+    transition:opacity .45s ease;
+  }
+  #splash.gone{opacity:0;pointer-events:none}
+  #splash .halo{position:absolute;border-radius:50%}
+  #splash .halo.big{width:420px;height:420px;background:#2A0F4A}
+  #splash .halo.small{width:260px;height:260px;background:#3A1560}
+  #splash svg,#splash .wordmark{position:relative}
+  #splash .wordmark{
+    display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+  }
+  #splash .wordmark b{
+    font-size:26px;font-weight:800;letter-spacing:-.01em;color:var(--white);
+  }
+  #splash .wordmark span{
+    font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#C08CFF;
+  }
+
   button{
     -webkit-appearance:none;appearance:none;border:0;
     background:transparent;color:inherit;font:inherit;
@@ -330,6 +357,26 @@
   </div>
 </div>
 
+<div id="splash">
+  <div class="halo big"></div>
+  <div class="halo small"></div>
+  <svg viewBox="0 0 512 512" width="150" height="150" aria-hidden="true">
+    <g stroke="#3A1560" stroke-width="10">
+      <polygon points="216,296 152,112 56,64 38,186 136,266" fill="#FFB3D9"/>
+      <polygon points="216,296 152,112 114,128 164,264" fill="#FF2D95"/>
+      <polygon points="216,304 124,302 46,354 114,420 198,344" fill="#8B36E8"/>
+      <polygon points="296,296 360,112 456,64 474,186 376,266" fill="#FFB3D9"/>
+      <polygon points="296,296 360,112 398,128 348,264" fill="#FF2D95"/>
+      <polygon points="296,304 388,302 466,354 398,420 314,344" fill="#8B36E8"/>
+    </g>
+    <polygon points="220,170 220,346 356,258" fill="#FFF4FA"/>
+  </svg>
+  <div class="wordmark">
+    <b>Winx Remote</b>
+    <span>la télécommande magique</span>
+  </div>
+</div>
+
 <script>
 "use strict";
 
@@ -380,10 +427,20 @@ function render() {
     : '<polygon points="7,4 7,20 20,12"/>';
 
   document.getElementById("title").textContent = title || "Rien en lecture";
+
+  const nomSource = sourceName === "netflix" ? "Netflix"
+                  : sourceName === "prime" ? "Prime Video" : null;
   const parts = [];
-  if (sourceName) parts.push(sourceName === "netflix" ? "Netflix" : "Prime Video");
+  /* Netflix ne publie que son propre nom comme titre : le répéter juste en
+     dessous n'apprendrait rien. */
+  if (nomSource && (!title || title.toLowerCase().indexOf(nomSource.toLowerCase()) === -1)) {
+    parts.push(nomSource);
+  }
   if (artist) parts.push(artist);
-  document.getElementById("subtitle").textContent = parts.length ? parts.join(" · ") : "Aucune source détectée";
+
+  const sub = document.getElementById("subtitle");
+  sub.textContent = parts.length ? parts.join(" · ") : (title ? "" : "Aucune source détectée");
+  sub.style.display = sub.textContent ? "" : "none";
 
   document.querySelectorAll("#sources span").forEach(el => {
     el.classList.toggle("on", el.dataset.source === sourceName);
@@ -573,7 +630,30 @@ document.addEventListener("gesturestart", e => e.preventDefault());
 /* Le nom du Mac vient de l'URL : c'est déjà lui qu'on a saisi pour venir. */
 document.getElementById("device").textContent = location.hostname.replace(/\.local$/, "");
 
-render(); refresh(); listen();
+/* L'écran de lancement s'efface dès que le premier état est là, mais pas
+   avant un court temps de pose : sans lui, il disparaîtrait en un clin d'œil
+   sur le réseau local et on ne le verrait jamais. */
+const splash = document.getElementById("splash");
+const splashDepuis = Date.now();
+let splashParti = false;
+
+function fermerSplash() {
+  if (splashParti) return;
+  splashParti = true;
+  const reste = Math.max(0, 900 - (Date.now() - splashDepuis));
+  setTimeout(() => {
+    splash.classList.add("gone");
+    setTimeout(() => splash.remove(), 600);
+  }, reste);
+}
+
+render();
+refresh().finally(fermerSplash);
+listen();
+
+/* Filet de sécurité : si le serveur ne répond pas du tout, l'écran de
+   lancement ne doit pas rester en travers de l'interface. */
+setTimeout(fermerSplash, 4000);
 </script>
 </body>
 </html>
