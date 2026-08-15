@@ -81,5 +81,9 @@ else
   construire_menubar "$SORTIE/Winx Remote.app"
   construire_installeur
   echo
-  echo "À copier sur la clé USB : $SORTIE/Installer Winx Remote.app"
+  echo "À copier sur la clé USB :"
+  echo "  $SORTIE/Installer Winx Remote.app"
+  echo
+  # Les bundles ne sont pas versionnés : sans cette ouverture, on les cherche.
+  open -R "$SORTIE/Installer Winx Remote.app" 2>/dev/null || true
 fi
