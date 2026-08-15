@@ -89,6 +89,7 @@ on construireMenu()
 	leMenu's addItem:(current application's NSMenuItem's separatorItem())
 	ajouterItem("Ouvrir la télécommande", "ouvrirTelecommande:", true)
 	ajouterItem("Afficher le QR code", "afficherQR:", true)
+	ajouterItem("QR code par adresse IP", "afficherQRparIP:", true)
 	ajouterItem("Copier l'adresse", "copierAdresse:", true)
 	leMenu's addItem:(current application's NSMenuItem's separatorItem())
 	ajouterItem("Redémarrer le serveur", "redemarrerServeur:", true)
@@ -145,6 +146,29 @@ on ouvrirTelecommande:sender
 	do shell script "/usr/bin/open " & quoted form of lAdresse
 end ouvrirTelecommande:
 
+(* Adresse de la machine sur l'interface qui porte la route par défaut.
+   Elle change d'un réseau à l'autre, contrairement au nom Bonjour, mais
+   elle dépanne là où mDNS ne passe pas : partage de connexion, réseau
+   d'invités, borne qui isole ses clients. *)
+on adresseIP()
+	try
+		set laCarte to do shell script "/sbin/route -n get default 2>/dev/null | /usr/bin/awk '/interface:/{print $2}'"
+		if laCarte is "" then return ""
+		return do shell script "/usr/sbin/ipconfig getifaddr " & quoted form of laCarte
+	on error
+		return ""
+	end try
+end adresseIP
+
+on afficherQRparIP:sender
+	set lIP to adresseIP()
+	if lIP is "" then
+		display alert "Adresse introuvable" message "Ce Mac n'a pas d'adresse sur un réseau actif." as warning
+		return
+	end if
+	produireQR("http://" & lIP & ":8765/?t=" & leToken)
+end afficherQRparIP:
+
 on copierAdresse:sender
 	set the clipboard to lAdresse
 end copierAdresse:
@@ -153,16 +177,23 @@ end copierAdresse:
    iPhone. Généré par CoreImage, donc sans aucune dépendance, puis agrandi
    par sips avant d'être ouvert dans Aperçu. *)
 on afficherQR:sender
-	set cheminBrut to "/tmp/soft-remote-qr-brut.png"
-	set cheminFinal to "/tmp/soft-remote-qr.png"
+	produireQR(lAdresse)
+end afficherQR:
 
-	set nsTexte to current application's NSString's stringWithString:lAdresse
+(* Le QR code évite d'avoir à recopier un jeton de 32 caractères sur un
+   iPhone. Généré par CoreImage, donc sans aucune dépendance, puis agrandi
+   par sips avant d'être ouvert dans Aperçu. *)
+on produireQR(uneAdresse)
+	set cheminBrut to "/tmp/winx-remote-qr-brut.png"
+	set cheminFinal to "/tmp/winx-remote-qr.png"
+
+	set nsTexte to current application's NSString's stringWithString:uneAdresse
 	set lesDonnees to nsTexte's dataUsingEncoding:(current application's NSISOLatin1StringEncoding)
 
 	set leFiltre to current application's CIFilter's filterWithName:"CIQRCodeGenerator"
 	if leFiltre is missing value then
+		set the clipboard to uneAdresse
 		display alert "QR code indisponible" message "CoreImage n'a pas fourni de générateur. L'adresse a été copiée dans le presse-papiers." as warning
-		set the clipboard to lAdresse
 		return
 	end if
 
@@ -180,7 +211,7 @@ on afficherQR:sender
 
 	do shell script "/usr/bin/sips -s format png -z 540 540 " & quoted form of cheminBrut & " --out " & quoted form of cheminFinal & " >/dev/null 2>&1"
 	do shell script "/usr/bin/open " & quoted form of cheminFinal
-end afficherQR:
+end produireQR
 
 on redemarrerServeur:sender
 	try

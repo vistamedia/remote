@@ -117,6 +117,13 @@ en général à l'en empêcher.
 **Une installation par Mac.** Les instances s'ignorent, chacune avec son
 adresse et son jeton. Rien ne se synchronise, il n'y a pas d'annuaire.
 
+**Le nom `.local` ne passe pas partout.** L'adresse repose sur Bonjour, ce qui
+lui évite de changer à chaque bail DHCP. Mais certains réseaux ne relaient pas
+ces annonces — un partage de connexion iPhone, un réseau d'invités, une borne
+qui isole ses clients. L'app de barre de menus propose alors un second QR code
+bâti sur l'adresse IP, qui fonctionne partout mais devra être refait si
+l'adresse change.
+
 **Environ 190 ms de latence.** Chaque réglage passe par `osascript`, dont le
 démarrage coûte ce prix sur un Mac récent. L'affichage bouge sous le doigt
 sans attendre ; c'est le son qui suit avec ce léger retard.
