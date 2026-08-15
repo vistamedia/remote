@@ -291,7 +291,16 @@ async function handleFullscreen(req, res) {
     return sendJson(res, 503, { error: "aucune application pilotable au premier plan" });
   }
 
-  await fullscreen.control(wanted);
+  try {
+    await fullscreen.control(wanted);
+  } catch (err) {
+    /* Frappe retenue parce que le curseur est dans un champ de saisie : la
+       commande n'a pas abouti, mais rien n'est en panne et rien n'a été
+       écrit dans la page. */
+    if (err.blocked) return sendJson(res, 409, { error: err.message });
+    throw err;
+  }
+
   const result = state.compose();
   state.publish(result);
   return sendJson(res, 200, result);

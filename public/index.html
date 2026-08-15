@@ -772,6 +772,10 @@ fsBtn.onclick = async () => {
       render();
       return online(true);
     }
+    /* 409 : la frappe a été retenue, le curseur se trouvant dans un champ de
+       saisie. Rien n'a changé sur le Mac et le serveur va bien — le bouton
+       reste donc en l'état plutôt que d'annoncer une panne. */
+    if (r.status === 409) return online(true);
     if (!r.ok) throw new Error(r.status);
     const s = await r.json();
     const f = s.fullscreen || {};

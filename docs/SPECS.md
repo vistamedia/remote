@@ -251,13 +251,15 @@ Deux voies, et c'est la machine qui choisit.
 |---|---|---|
 | VLC | `fullscreen mode` | oui |
 | QuickTime | `presenting of document 1` | oui |
-| Chrome, Safari, Firefox | frappe de `Cmd-Ctrl-F` par System Events | non |
+| Chrome, Safari, Firefox | frappe de `f` par System Events | non |
 
 L'application au premier plan est lue par `NSWorkspace.frontmostApplication`, qui ne réclame **aucune autorisation** — contrairement à System Events, dont l'interrogation déclencherait une demande d'accès dès le démarrage. C'est la même précaution que celle prise pour le repli média du §6.3. Un seul `osascript` rapporte l'identité de l'application, l'état de l'autorisation et le plein écran quand il est lisible.
 
 **Le dégradé.** Les navigateurs n'exposent rien et ne se pilotent que par frappe de raccourci, ce qui exige l'autorisation Accessibilité pour le serveur. Elle n'est jamais demandée : `AXIsProcessTrusted()` constate si elle est là. Sur le Mac où elle a été accordée, Netflix et YouTube fonctionnent ; sur celui où personne n'a rien réglé, le bouton n'apparaît pas plutôt que de rester mort. Rien à configurer pour que le reste marche.
 
-**Le raccourci est `Cmd-Ctrl-F`, pas `f`.** Ce dernier atteint le lecteur vidéo lui-même, mais tomberait dans la page comme une frappe de texte si le curseur se trouvait dans un champ de saisie. Conséquence assumée : sur un navigateur, c'est la fenêtre qui passe en plein écran, pas la vidéo.
+**Le raccourci est `f`, pas `Cmd-Ctrl-F`.** Le raccourci système met la *fenêtre* du navigateur en plein écran, avec l'interface du site tout autour ; `f` commande le *lecteur vidéo* lui-même, et Netflix, YouTube et Prime Video le reconnaissent tous les trois. C'est le plein écran vidéo qui est recherché depuis le lit, pas une grande fenêtre.
+
+Le danger de `f` est qu'il s'écrit dans la page si le curseur se trouve dans un champ de saisie. L'élément qui a le focus est donc interrogé d'abord, et la frappe retenue si son rôle est `AXTextField`, `AXTextArea`, `AXComboBox` ou `AXSearchField`. L'API renvoie alors `409` : rien n'a été écrit, rien n'est en panne, et l'interface laisse le bouton en l'état sans annoncer de perte de connexion. Cette garde ne coûte aucune autorisation supplémentaire, la frappe passant déjà par System Events.
 
 **L'écriture est relue, jamais crue.** Sans image à afficher — fichier audio, ou playlist vide — VLC accepte la commande sans l'appliquer. Le bouton aurait affiché le contraire de l'écran du Mac. Le refus est immédiat, mesuré, donc une seule relecture suffit et rien ne clignote. Même raison pour exiger un média chargé avant d'annoncer la commande disponible.
 
@@ -433,7 +435,7 @@ Deux commandes ont été ajoutées après coup : la luminosité de l'écran (§6
 - Pas de fonctionnement hors ligne : l'app est une fenêtre sur le serveur.
 - Volume système global uniquement, pas de réglage par application.
 - La luminosité repose sur `DisplayServices`, framework privé d'Apple : même exposition que `nowplaying-cli` à une mise à jour majeure de macOS. Elle ne couvre que l'écran principal, la plupart des écrans externes refusant de rendre leur luminosité.
-- Le plein écran d'une vidéo web reste hors de portée sans l'autorisation Accessibilité, et même avec elle, `Cmd-Ctrl-F` met la fenêtre du navigateur en plein écran, pas la vidéo. VLC et QuickTime, eux, passent bien en plein écran vidéo.
+- Le plein écran d'une vidéo web reste hors de portée sans l'autorisation Accessibilité. Avec elle, la frappe de `f` atteint le lecteur, mais reste retenue tant que le curseur est dans un champ de saisie : le bouton ne fait alors rien, sans qu'on puisse le prévoir avant l'appui.
 - VLC n'expose pas la présence d'une piste vidéo : la commande est annoncée disponible dès qu'un média est chargé, et le refus n'apparaît qu'à la relecture qui suit l'écriture.
 - Une installation par Mac, à vérifier machine par machine (§2). Rien n'est mutualisé, rien ne se synchronise.
 - Node.js doit être installé au préalable sur chaque machine.
