@@ -101,21 +101,37 @@ Toutes les réponses sont en JSON. Le token est transmis dans l'en-tête `X-Toke
   "muted": false,
   "outputDevice": "MacBook Pro Speakers",
   "volumeControllable": true,
+  "brightness": 68,
+  "brightnessControllable": true,
   "media": {
     "available": true, "playing": true,
     "title": "…", "artist": "…",
     "duration": 3626, "elapsed": 178,
     "source": "netflix"
+  },
+  "fullscreen": {
+    "available": true, "active": false, "app": "VLC"
   }
 }
 ```
 
 `volumeControllable` à `false` signale le cas V1 : l'interface doit alors afficher un état dégradé explicite plutôt qu'un curseur qui ne fait rien.
 
+`brightnessControllable` joue le même rôle pour l'écran, et vaut `false` dès que DisplayServices refuse — écran externe, ou framework retiré par une mise à jour de macOS.
+
+`fullscreen.available` dit si l'application au premier plan se laisse piloter ; `active` vaut `null` quand elle ne publie pas son état, ce qui est le cas des navigateurs.
+
 ### `POST /api/volume`
 
 Corps `{ "value": 42 }` (absolu, 0–100) ou `{ "delta": -5 }` (relatif, borné à 0–100).
 Réponse : l'état complet. `409` si `volumeControllable` est faux.
+
+### `POST /api/brightness`
+
+Corps `{ "value": 68 }` (absolu, 0–100) ou `{ "delta": -5 }` (relatif, borné à 0–100).
+Réponse : l'état complet. `409` si `brightnessControllable` est faux.
+
+Zéro est atteignable : l'écran devient noir sans s'éteindre, et se remonte depuis l'iPhone — c'est précisément ce à quoi sert la télécommande, et les touches du clavier du Mac restent un filet si le serveur tombe.
 
 ### `POST /api/mute`
 
@@ -127,6 +143,13 @@ Corps `{ "action": "playpause" | "next" | "previous" }`, ou `{ "action": "seek",
 `503` si aucun backend média n'est disponible.
 
 `duration`, `elapsed` et `source` sont nuls quand la source ne les publie pas — c'est le cas de Netflix. `source` est déduit du titre publié : on nomme la lecture en cours, on ne la choisit pas.
+
+### `POST /api/fullscreen`
+
+Corps `{ "toggle": true }`, ou `{ "active": true }` quand l'application publie son état.
+`503` si aucune application pilotable n'est au premier plan.
+
+La réponse rapporte l'état **relu après écriture**, et non celui qui a été demandé : sans image à afficher, VLC accepte la commande sans l'appliquer. `{ "active": … }` est refusé sur une application qui ne publie pas son état, faute de pouvoir vérifier quoi que ce soit.
 
 ### `POST /api/display`
 
@@ -189,6 +212,24 @@ Si la latence reste gênante, l'optimisation est un petit binaire Swift tapant d
 | Éteindre | `pmset displaysleepnow` |
 | Rallumer | `caffeinate -u -t 1` |
 
+**Luminosité.** macOS ne l'expose ni à `osascript` ni à `pmset` : aucune commande shell ne la règle. La seule voie sans binaire tiers passe par `DisplayServices`, un framework privé d'Apple, appelé depuis **JavaScript for Automation** — le pont ObjC de JXA sait charger un framework et lier une fonction C. Le projet reste donc sans dépendance et sans étape de build, et `osascript` demeure le seul appel système.
+
+| Action | Fonction liée |
+|---|---|
+| Lire | `DisplayServicesGetBrightness(CGMainDisplayID(), &niveau)` |
+| Écrire | `DisplayServicesSetBrightness(CGMainDisplayID(), niveau)` |
+| Écran endormi ? | `CGDisplayIsAsleep(CGMainDisplayID())` |
+
+Le niveau est un flottant de 0 à 1, converti en pourcentage entier pour l'API. Un appel coûte environ 80 ms, soit **deux fois moins** que le fork AppleScript du volume. Le coalescing du §6.1 s'applique à l'identique.
+
+Trois points mesurés, à ne pas perdre :
+
+1. **La relecture est exacte** — 42 écrit, 42 relu, sur toute la plage. La tolérance de réconciliation est donc de 1 et non de 3 : les crans du clavier du Mac valent environ six points et doivent rester visibles.
+2. **L'écran endormi ment.** Pendant le sommeil, le niveau lu reflète l'extinction et non le réglage. Sans `CGDisplayIsAsleep`, le curseur tomberait à zéro tout seul et écraserait la valeur à retrouver au réveil.
+3. **La luminosité automatique bouge seule.** Le capteur de lumière ambiante modifie le niveau sans qu'on le demande ; le sondage le remonte, ce qui est le comportement voulu — le Mac reste la source de vérité.
+
+Framework privé veut dire fragile, exactement comme `nowplaying-cli` : une mise à jour majeure de macOS peut le retirer. L'échec est traité comme le cas V1 de l'audio, en annonçant `brightnessControllable: false`.
+
 ### 6.3 Média
 
 Voie principale : `nowplaying-cli togglePlayPause | next | previous`. Elle a l'avantage de couvrir toute application enregistrée auprès du système, y compris la lecture vidéo dans Safari ou Chrome — donc YouTube.
@@ -201,6 +242,24 @@ tell application "Spotify" to next track
 ```
 
 Couvre Music, Spotify, VLC, QuickTime. Ne couvre pas les navigateurs. L'API renvoie alors `available: true` avec une liste de capacités réduite, et l'interface masque ce qu'elle ne peut pas faire plutôt que d'offrir des boutons morts.
+
+### 6.4 Plein écran
+
+Deux voies, et c'est la machine qui choisit.
+
+| Application | Voie | État lisible |
+|---|---|---|
+| VLC | `fullscreen mode` | oui |
+| QuickTime | `presenting of document 1` | oui |
+| Chrome, Safari, Firefox | frappe de `Cmd-Ctrl-F` par System Events | non |
+
+L'application au premier plan est lue par `NSWorkspace.frontmostApplication`, qui ne réclame **aucune autorisation** — contrairement à System Events, dont l'interrogation déclencherait une demande d'accès dès le démarrage. C'est la même précaution que celle prise pour le repli média du §6.3. Un seul `osascript` rapporte l'identité de l'application, l'état de l'autorisation et le plein écran quand il est lisible.
+
+**Le dégradé.** Les navigateurs n'exposent rien et ne se pilotent que par frappe de raccourci, ce qui exige l'autorisation Accessibilité pour le serveur. Elle n'est jamais demandée : `AXIsProcessTrusted()` constate si elle est là. Sur le Mac où elle a été accordée, Netflix et YouTube fonctionnent ; sur celui où personne n'a rien réglé, le bouton n'apparaît pas plutôt que de rester mort. Rien à configurer pour que le reste marche.
+
+**Le raccourci est `Cmd-Ctrl-F`, pas `f`.** Ce dernier atteint le lecteur vidéo lui-même, mais tomberait dans la page comme une frappe de texte si le curseur se trouvait dans un champ de saisie. Conséquence assumée : sur un navigateur, c'est la fenêtre qui passe en plein écran, pas la vidéo.
+
+**L'écriture est relue, jamais crue.** Sans image à afficher — fichier audio, ou playlist vide — VLC accepte la commande sans l'appliquer. Le bouton aurait affiché le contraire de l'écran du Mac. Le refus est immédiat, mesuré, donc une seule relecture suffit et rien ne clignote. Même raison pour exiger un média chargé avant d'annoncer la commande disponible.
 
 ---
 
@@ -238,7 +297,7 @@ Fond indigo profond, accent fuchsia virant au violet sur le remplissage du volum
 
 ```
 ┌──────────────────────┐
-│                 ● ⬤  │   état de connexion
+│  [🔈|☀]         ● ⬤  │   grandeur réglée, état de connexion
 │  ⋀  Winx Remote  [NF]│   icône, nom du Mac, source détectée
 │                      │
 │          +           │
@@ -249,11 +308,17 @@ Fond indigo profond, accent fuchsia virant au violet sur le remplissage du volum
 │  ▬▬▬▬▬▬●▭▭▭▭▭▭▭▭▭▭   │   progression, masquée si non publiée
 │  Titre · Source      │
 │  ⏮  −10  ⏯  +10  ⏭   │   transport, cibles ≥ 52 px
-│  🔇   éteindre l'écran│
+│  🔇  éteindre l'écran ⛶│  plein écran masqué si indisponible
 └──────────────────────┘
 ```
 
 État muet : le nombre affiche 0 en `--mauve-700`, le libellé passe à « sourdine », le bouton devient doré. La valeur réelle du volume est conservée et revient dès qu'on lève la sourdine.
+
+**Volume ou luminosité.** Le grand curseur règle l'un ou l'autre, et un sélecteur en haut à gauche choisit lequel. Le geste, les boutons `+` et `−` et le throttle sont partagés : seule la destination change. Le remplissage vire à l'or en mode luminosité, déjà la couleur de l'écran dans la palette, pour que les deux modes se distinguent sans lire le libellé — l'or étant clair là où le fuchsia et le violet sont sombres, les signes `+` et `−` reçoivent un disque translucide qui les en détache.
+
+Le sélecteur est en icônes seules, délibérément distinct du sélecteur de source : l'un est un vrai choix, l'autre un simple indicateur, et deux composants de même forme aux comportements différents se seraient contredits. Il disparaît quand la luminosité n'est pas pilotable, le curseur revenant alors au volume.
+
+L'appui sans glissement reste inerte, comme prévu au §7.1 : il n'a pas été détourné pour basculer de grandeur, bien qu'il soit la cible la plus facile à viser dans le noir.
 
 ### 7.4 Détails techniques d'interface
 
@@ -314,8 +379,10 @@ remote/
 ├── server.js
 ├── lib/
 │   ├── audio.js       osascript, parsing, coalescing
+│   ├── brightness.js  DisplayServices via JXA, coalescing
 │   ├── media.js       nowplaying-cli + repli AppleScript
 │   ├── display.js     pmset, caffeinate
+│   ├── fullscreen.js  NSWorkspace, Apple Events, dégradé Accessibilité
 │   ├── state.js       composition de l'état, sondage conditionnel
 │   └── sse.js
 ├── public/
@@ -352,6 +419,8 @@ abonnement développeur.
 
 Les six jalons sont livrés. L'interface a ensuite été refondue à partir du handoff `design_handoff_winx_remote/`, et l'installation confiée à un bundle double-cliquable plutôt qu'à un script.
 
+Deux commandes ont été ajoutées après coup : la luminosité de l'écran (§6.2), qui partage le grand curseur avec le volume, et le plein écran de l'application au premier plan (§6.4).
+
 ---
 
 ## 12. Limites connues
@@ -363,6 +432,9 @@ Les six jalons sont livrés. L'interface a ensuite été refondue à partir du h
 - Mac endormi : télécommande injoignable.
 - Pas de fonctionnement hors ligne : l'app est une fenêtre sur le serveur.
 - Volume système global uniquement, pas de réglage par application.
+- La luminosité repose sur `DisplayServices`, framework privé d'Apple : même exposition que `nowplaying-cli` à une mise à jour majeure de macOS. Elle ne couvre que l'écran principal, la plupart des écrans externes refusant de rendre leur luminosité.
+- Le plein écran d'une vidéo web reste hors de portée sans l'autorisation Accessibilité, et même avec elle, `Cmd-Ctrl-F` met la fenêtre du navigateur en plein écran, pas la vidéo. VLC et QuickTime, eux, passent bien en plein écran vidéo.
+- VLC n'expose pas la présence d'une piste vidéo : la commande est annoncée disponible dès qu'un média est chargé, et le refus n'apparaît qu'à la relecture qui suit l'écriture.
 - Une installation par Mac, à vérifier machine par machine (§2). Rien n'est mutualisé, rien ne se synchronise.
 - Node.js doit être installé au préalable sur chaque machine.
 
@@ -371,5 +443,4 @@ Les six jalons sont livrés. L'interface a ensuite été refondue à partir du h
 - Binaire Swift CoreAudio pour supprimer la latence des forks.
 - `tailscale serve` : certificat valide, vraie PWA, accès hors domicile.
 - Changement de périphérique de sortie via `switchaudio-osx`.
-- Réglage de la luminosité de l'écran du Mac (nécessite un binaire tiers).
 - Minuterie d'arrêt : baisser progressivement le volume puis mettre en pause après *n* minutes — la fonction d'endormissement qui manque, et qui donnerait tout son sens au nom.

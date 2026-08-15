@@ -38,6 +38,21 @@ un serveur ne connaît que la machine sur laquelle il tourne.
   d'un coup. Ne jamais forker deux fois pour ces deux valeurs.
 - **Tolérance de ±3 à la réconciliation du volume.** macOS arrondit en interne :
   envoyer 42 et relire 41 est normal. Sans cette tolérance le curseur sautille.
+- **Tolérance de ±1 seulement pour la luminosité.** La relecture y est exacte,
+  mesurée sur toute la plage. Ne pas l'aligner sur les ±3 du volume : les crans
+  du clavier du Mac valent environ six points et doivent rester visibles.
+- **La luminosité passe par JXA, pas par un binaire.** `DisplayServices` est
+  chargé et lié depuis JavaScript for Automation, ce qui garde le projet sans
+  étape de build. Ne pas proposer `brightness` de Homebrew ni un binaire Swift.
+  Framework privé : traiter son absence comme le cas V1, pas comme une panne.
+- **L'écran endormi ment sur sa luminosité.** Toujours passer par
+  `CGDisplayIsAsleep` avant de publier une valeur, sinon le curseur tombe à
+  zéro tout seul et écrase le réglage à retrouver au réveil.
+- **Le plein écran est relu après écriture, jamais cru.** Sans image à
+  afficher, VLC accepte la commande sans l'appliquer.
+- **Ne jamais interroger System Events pour savoir ce qui est au premier plan.**
+  `NSWorkspace` le dit sans aucune autorisation. L'Accessibilité est constatée
+  par `AXIsProcessTrusted()`, jamais demandée.
 - **Le token est vérifié sur toutes les routes `/api/*`, flux SSE compris.**
 - **Sondage conditionnel :** la boucle de relecture d'état ne tourne que s'il
   existe au moins un client SSE connecté. Sans client, aucun process forké.
@@ -57,10 +72,15 @@ rôle de Claude Code est de **le brancher sur l'API, pas de le redessiner**.
   source est un indicateur, pas un choix : macOS n'expose qu'une seule session
   de lecture. La barre de progression se masque quand la source ne publie ni
   durée ni position, plutôt que de rester figée à zéro.
-- Deux écarts assumés avec le handoff : le pas des boutons est de 5 et non 4,
+- Trois écarts assumés avec le handoff : le pas des boutons est de 5 et non 4,
   valeur validée à l'usage ; la police Outfit est embarquée dans `public/fonts/`
   au lieu d'être chargée depuis Google Fonts, la télécommande devant
-  fonctionner sans accès à Internet.
+  fonctionner sans accès à Internet ; le sélecteur volume/luminosité et le
+  bouton de plein écran ne figurent pas au handoff, les deux commandes ayant
+  été ajoutées après lui.
+- **L'appui sans glissement reste inerte.** C'est la cible la plus facile à
+  viser dans le noir, donc la tentation est grande de lui confier la bascule
+  volume/luminosité. Ne pas le faire sans demander : l'inertie est délibérée.
 
 ## Méthode de travail
 
