@@ -1,0 +1,20 @@
+{
+  "name": "Soft Remote",
+  "short_name": "Soft Remote",
+  "description": "Télécommande de volume, de lecture et d'écran pour un Mac, depuis un iPhone, sur le réseau local.",
+  "lang": "fr",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0A09",
+  "theme_color": "#0B0A09",
+  "icons": [
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
