@@ -93,6 +93,7 @@ on construireMenu()
 	leMenu's addItem:(current application's NSMenuItem's separatorItem())
 	ajouterItem("Redémarrer le serveur", "redemarrerServeur:", true)
 	leMenu's addItem:(current application's NSMenuItem's separatorItem())
+	ajouterItem("À propos de Winx Remote", "aPropos:", true)
 	ajouterItem("Quitter Winx Remote", "quitterApp:", true)
 
 	statusItem's setMenu:leMenu
@@ -190,6 +191,38 @@ on redemarrerServeur:sender
 		display alert "Redémarrage impossible" message leMessage as warning
 	end try
 end redemarrerServeur:
+
+(* Une app de barre de menus n'a pas de fenêtre : sans cette activation, le
+   dialogue s'ouvrirait derrière l'application de premier plan. *)
+on aPropos:sender
+	set laVersion to "1.0"
+	try
+		set laVersion to do shell script "/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' " & quoted form of ((POSIX path of (path to me)) & "Contents/Info.plist")
+	end try
+
+	current application's NSApp's activateIgnoringOtherApps:true
+
+	set leTexte to "Télécommande pour Mac, pilotée depuis un iPhone.
+Version " & laVersion & "
+
+Conçue pour Elisa.
+
+—
+
+Emmanuel Danan
+Conception d'applications mobiles et web, d'interfaces et d'outils sur mesure, de la première idée à la mise en service.
+
+Une application à imaginer, un outil qui vous manque ? Parlons-en.
+emmanuel.danan@gmail.com
+
+Logiciel libre, sous licence GNU GPL v3."
+
+	set leChoix to button returned of (display alert "Winx Remote" message leTexte buttons {"Fermer", "Écrire à Emmanuel"} default button "Fermer")
+
+	if leChoix is "Écrire à Emmanuel" then
+		do shell script "/usr/bin/open " & quoted form of "mailto:emmanuel.danan@gmail.com?subject=Une%20application%20sur%20mesure"
+	end if
+end aPropos:
 
 on quitterApp:sender
 	quit
