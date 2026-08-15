@@ -94,6 +94,8 @@ on installer()
 	do shell script "/bin/rm -rf " & quoted form of (dossierApps & "/Winx Remote.app")
 	do shell script "/usr/bin/osacompile -s -o " & quoted form of (dossierApps & "/Winx Remote.app") & " " & quoted form of (lesRessources & "WinxRemote.applescript")
 	do shell script "/bin/cp " & quoted form of (lesRessources & "menubar.png") & " " & quoted form of (dossierApps & "/Winx Remote.app/Contents/Resources/")
+	-- Remplace l'icône d'AppleScript posée par osacompile.
+	do shell script "/bin/cp " & quoted form of (lesRessources & "AppIcon.icns") & " " & quoted form of (dossierApps & "/Winx Remote.app/Contents/Resources/applet.icns")
 
 	set lePlistApp to dossierApps & "/Winx Remote.app/Contents/Info.plist"
 	do shell script "/usr/libexec/PlistBuddy -c 'Add :LSUIElement bool true' " & quoted form of lePlistApp & " 2>/dev/null || true"

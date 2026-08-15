@@ -33,6 +33,8 @@ construire_menubar() {
 
   # L'icône de barre de menus, la même que sur l'écran d'accueil de l'iPhone.
   cp "$ICI/assets/menubar.png" "$cible/Contents/Resources/"
+  # L'icône du bundle remplace celle d'AppleScript, posée par osacompile.
+  cp "$ICI/assets/AppIcon.icns" "$cible/Contents/Resources/applet.icns"
 
   local plist="$cible/Contents/Info.plist"
   # LSUIElement la garde hors du Dock : elle ne vit que dans la barre de menus.
@@ -70,6 +72,8 @@ construire_installeur() {
   cp -R "$RACINE"/public/. "$res/payload/public/"
   cp "$ICI/WinxRemote.applescript" "$res/"
   cp "$ICI/assets/menubar.png" "$res/"
+  cp "$ICI/assets/AppIcon.icns" "$res/"
+  cp "$ICI/assets/AppIcon.icns" "$res/applet.icns"
 
   codesign --force --sign - "$cible" >/dev/null 2>&1 || true
   echo "  installeur            : $cible"
