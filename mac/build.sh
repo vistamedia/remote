@@ -16,6 +16,14 @@ ICI="$(cd "$(dirname "$0")" && pwd)"
 RACINE="$(cd "$ICI/.." && pwd)"
 SORTIE="$ICI/build"
 
+# osacompile laisse CFBundleIconName pointer vers Assets.car, son propre
+# catalogue d'icônes. Cette clé prime sur CFBundleIconFile : tant qu'elle est
+# là, l'icône qu'on dépose dans applet.icns n'est jamais consultée et le
+# bundle garde la vignette d'AppleScript.
+retirer_icone_applescript() {
+  /usr/libexec/PlistBuddy -c "Delete :CFBundleIconName" "$1" >/dev/null 2>&1 || true
+}
+
 # Renseigne l'Info.plist d'un bundle, que la clé existe déjà ou non.
 poser() {
   local plist="$1" cle="$2" type="$3" valeur="$4"
@@ -43,6 +51,8 @@ construire_menubar() {
   poser "$plist" CFBundleIdentifier string local.remote.menubar
   poser "$plist" CFBundleShortVersionString string 1.0
   poser "$plist" NSHumanReadableCopyright string "Copyright (C) 2026 Emmanuel Danan — GNU GPL v3"
+
+  retirer_icone_applescript "$plist"
 
   # Modifier le plist invalide la signature ad hoc posée par osacompile.
   codesign --force --sign - "$cible" >/dev/null 2>&1 || true
@@ -74,6 +84,8 @@ construire_installeur() {
   cp "$ICI/assets/menubarWingsPlayTemplate"*.png "$res/"
   cp "$ICI/assets/AppIcon.icns" "$res/"
   cp "$ICI/assets/AppIcon.icns" "$res/applet.icns"
+
+  retirer_icone_applescript "$plist"
 
   codesign --force --sign - "$cible" >/dev/null 2>&1 || true
   echo "  installeur            : $cible"

@@ -101,6 +101,9 @@ on installer()
 	do shell script "/usr/libexec/PlistBuddy -c 'Add :LSUIElement bool true' " & quoted form of lePlistApp & " 2>/dev/null || true"
 	do shell script "/usr/libexec/PlistBuddy -c 'Add :CFBundleName string Winx Remote' " & quoted form of lePlistApp & " 2>/dev/null || true"
 	do shell script "/usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string local.remote.menubar' " & quoted form of lePlistApp & " 2>/dev/null || true"
+	-- CFBundleIconName pointe vers le catalogue d'AppleScript et prime sur
+	-- CFBundleIconFile : tant qu'elle est là, notre icône reste ignorée.
+	do shell script "/usr/libexec/PlistBuddy -c 'Delete :CFBundleIconName' " & quoted form of lePlistApp & " 2>/dev/null || true"
 	do shell script "/usr/bin/codesign --force --sign - " & quoted form of (dossierApps & "/Winx Remote.app") & " 2>/dev/null || true"
 
 	-- Le service, avec les chemins de cette machine
