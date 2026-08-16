@@ -226,6 +226,7 @@
     font-size:11px;color:var(--lilac-300);
   }
   .key:active{background:var(--indigo-600)}
+  .key.hidden{display:none}
   .key svg{width:20px;height:20px;fill:#EDE4F7}
   #play{
     width:76px;height:76px;display:grid;place-items:center;
@@ -461,6 +462,8 @@ const modes    = document.getElementById("modes");
 const upBtn    = document.getElementById("up");
 const downBtn  = document.getElementById("down");
 const fsBtn    = document.getElementById("fullscreen");
+const back10Btn= document.getElementById("back10");
+const fwd10Btn = document.getElementById("fwd10");
 const nums     = document.querySelectorAll("[data-num]");
 const caps     = document.querySelectorAll("[data-cap]");
 
@@ -538,6 +541,11 @@ function render() {
 
   const hasProgress = duration !== null && elapsed !== null;
   meta.classList.toggle("no-progress", !hasProgress);
+  /* Sans position, il n'y a pas d'origine d'où sauter : les deux boutons
+     disparaissent au lieu de rester morts, comme la barre au-dessus d'eux.
+     La rangée de transport reste équilibrée à trois touches. */
+  back10Btn.classList.toggle("hidden", !hasProgress);
+  fwd10Btn.classList.toggle("hidden", !hasProgress);
   if (hasProgress) {
     const ratio = Math.max(0, Math.min(1, elapsed / duration));
     document.documentElement.style.setProperty("--progress", (ratio * 100).toFixed(2) + "%");
@@ -737,8 +745,17 @@ document.getElementById("prev").onclick = () => {
 };
 document.getElementById("next").onclick = () => send("/media", { action: "next" });
 
-document.getElementById("back10").onclick = () => seekTo((elapsed || 0) - 10);
-document.getElementById("fwd10").onclick  = () => seekTo((elapsed || 0) + 10);
+/* Un saut relatif exige une origine. Quand la source ne publie pas sa
+   position — Netflix n'en publie aucune, Prime Video publie la durée seule —
+   la calculer depuis zéro demandait un saut à la dixième seconde, ce qui
+   renvoyait le film à son début et faisait apparaître une barre de
+   progression fondée sur cette valeur inventée. On s'abstient. */
+function stepSeek(delta) {
+  if (duration === null || elapsed === null) return;
+  seekTo(elapsed + delta);
+}
+back10Btn.onclick = () => stepSeek(-10);
+fwd10Btn.onclick  = () => stepSeek(10);
 
 function seekTo(position) {
   if (duration === null) return;
