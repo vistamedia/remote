@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#0B0616; font-family:'Outfit',system-ui,sans-serif; }
+  a { color:#FF6FB5; text-decoration:none; }
+  a:hover { color:#FFCF5C; }
+  @keyframes wr-float { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-9px) } }
+  @keyframes wr-shake { 0%,100% { transform:rotate(0deg) } 25% { transform:rotate(-9deg) } 75% { transform:rotate(9deg) } }
+</style>
+</helmet>
+
+<section style="padding:56px; display:flex; flex-direction:column; gap:34px; color:#EDE4F7;">
+
+  <header style="display:flex; flex-direction:column; gap:12px; max-width:820px;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span style="font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:#B98BE0;">Tour 2</span>
+      <span style="height:1px; flex:1; background:#2B1B44;"></span>
+    </div>
+    <h1 style="margin:0; font-size:34px; font-weight:800; letter-spacing:-.02em;">Écran hors connexion</h1>
+    <p style="margin:0; font-size:15px; line-height:1.65; color:#A794C0; text-wrap:pretty;">Même construction que le splash — disques concentriques, fond <code style="color:#C9B6DE;">#150826</code> — mais la fée a raté son sort. Le bouton fonctionne : il joue l'incantation et échoue, avec une réplique différente à chaque essai. Deux tons d'humour, <a href="#2a">2a</a> et <a href="#2b">2b</a>.</p>
+  </header>
+
+  <div style="display:flex; flex-wrap:wrap; gap:44px;">
+
+    <div id="2a" style="display:flex; flex-direction:column; gap:16px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:.14em; color:#0B0616; background:#FF2D95; padding:4px 9px; border-radius:6px;">2A</span>
+        <span style="font-size:15px; font-weight:600;">Complice</span>
+      </div>
+      <div style="width:390px; height:844px; border-radius:52px; background:#150826; box-shadow:0 0 0 10px #201332; overflow:hidden; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; padding:0 40px; box-sizing:border-box;">
+        <div style="position:absolute; width:460px; height:460px; border-radius:50%; background:#2A0F4A;"></div>
+        <div style="position:absolute; width:280px; height:280px; border-radius:50%; background:#3A1560;"></div>
+
+        <div style="position:absolute; top:34px; left:0; right:0; display:flex; justify-content:center;">
+          <span style="display:flex; align-items:center; gap:9px; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#FFCF5C; background:rgba(255,207,92,.1); padding:8px 16px; border-radius:999px;">
+            <span style="width:7px; height:7px; border-radius:50%; background:#FFCF5C;"></span>hors ligne
+          </span>
+        </div>
+
+        <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:36px;">
+          <div style="{{ floatStyleA }}">
+            <svg viewBox="0 0 220 300" width="228" height="311">
+              <g opacity="0.55">
+                <polygon points="98,118 74,58 22,34 14,86 62,110" fill="#8B36E8"></polygon>
+                <polygon points="98,124 56,122 20,150 50,180 92,148" fill="#6C1FC4"></polygon>
+                <polygon points="122,118 146,58 198,34 206,86 158,110" fill="#8B36E8"></polygon>
+                <polygon points="122,124 164,122 200,150 170,180 128,148" fill="#6C1FC4"></polygon>
+              </g>
+              <polygon points="96,92 124,92 142,182 78,182" fill="#FF2D95"></polygon>
+              <polygon points="96,92 124,92 128,126 92,126" fill="#FF6FB5"></polygon>
+              <rect x="97" y="182" width="8" height="40" fill="#FFB3D9"></rect>
+              <rect x="115" y="182" width="8" height="40" fill="#FFB3D9"></rect>
+              <polygon points="90,222 112,222 108,232 86,232" fill="#FFF4FA"></polygon>
+              <polygon points="108,222 130,222 134,232 112,232" fill="#FFF4FA"></polygon>
+              <circle cx="110" cy="72" r="21" fill="#FFD9C7"></circle>
+              <polygon points="86,72 88,46 110,34 132,46 134,72 126,54 94,54" fill="#FF9E3D"></polygon>
+              <polygon points="84,60 84,96 96,86 94,62" fill="#FF9E3D"></polygon>
+              <polygon points="136,60 136,96 124,86 126,62" fill="#FF9E3D"></polygon>
+              <polygon points="124,100 152,146 142,152 116,110" fill="#FFD9C7"></polygon>
+              <g style="{{ wandStyleA }}" transform-origin="152 148">
+                <rect x="148" y="96" width="7" height="56" rx="3" fill="#C9B6DE" transform="rotate(24 152 148)"></rect>
+                <polygon points="172,74 178,88 192,94 178,100 172,114 166,100 152,94 166,88" fill="{{ starColorA }}"></polygon>
+              </g>
+              <circle cx="196" cy="118" r="4" fill="{{ dustColorA }}"></circle>
+              <circle cx="184" cy="136" r="3" fill="{{ dustColorA }}"></circle>
+              <circle cx="200" cy="150" r="2" fill="{{ dustColorA }}"></circle>
+            </svg>
+          </div>
+
+          <div style="display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;">
+            <h2 style="margin:0; font-size:31px; font-weight:800; letter-spacing:-.02em; color:#FFF4FA; line-height:1.15;">Le sortilège<br>est tombé à plat</h2>
+            <p style="margin:0; font-size:15px; line-height:1.65; color:#C9B6DE; max-width:290px; text-wrap:pretty;">{{ quipA }}</p>
+          </div>
+        </div>
+
+        <div style="position:absolute; left:40px; right:40px; bottom:44px; display:flex; flex-direction:column; align-items:center; gap:16px;">
+          <span onClick="{{ retryA }}" style="width:100%; height:56px; box-sizing:border-box; display:grid; place-items:center; border-radius:28px; background:{{ btnBgA }}; color:#150826; font-size:14px; font-weight:600; letter-spacing:.02em; cursor:pointer;" style-active="background:#D8177A">{{ btnLabelA }}</span>
+          <span style="font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#7A5F96;">{{ footA }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="2b" style="display:flex; flex-direction:column; gap:16px;">
+      <div style="display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:.14em; color:#0B0616; background:#FF2D95; padding:4px 9px; border-radius:6px;">2B</span>
+        <span style="font-size:15px; font-weight:600;">Pince-sans-rire</span>
+      </div>
+      <div style="width:390px; height:844px; border-radius:52px; background:#150826; box-shadow:0 0 0 10px #201332; overflow:hidden; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 40px; box-sizing:border-box;">
+        <div style="position:absolute; width:460px; height:460px; border-radius:50%; background:#22103C;"></div>
+        <div style="position:absolute; width:280px; height:280px; border-radius:50%; background:#2E1550;"></div>
+
+        <div style="position:absolute; top:34px; left:0; right:0; display:flex; justify-content:center;">
+          <span style="display:flex; align-items:center; gap:9px; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#8B6FA8;">
+            <span style="width:7px; height:7px; border-radius:50%; background:#8B6FA8;"></span>aucune connexion
+          </span>
+        </div>
+
+        <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:40px;">
+          <svg viewBox="0 0 220 300" width="210" height="286">
+            <g opacity="0.32">
+              <polygon points="98,140 78,84 30,58 22,108 66,132" fill="#8B36E8"></polygon>
+              <polygon points="98,146 60,146 26,172 54,200 92,170" fill="#6C1FC4"></polygon>
+              <polygon points="122,140 142,84 190,58 198,108 154,132" fill="#8B36E8"></polygon>
+              <polygon points="122,146 160,146 194,172 166,200 128,170" fill="#6C1FC4"></polygon>
+            </g>
+            <polygon points="96,116 124,116 142,206 78,206" fill="#6C1FC4"></polygon>
+            <polygon points="96,116 124,116 128,150 92,150" fill="#8B36E8"></polygon>
+            <rect x="97" y="206" width="8" height="38" fill="#C9A9E0"></rect>
+            <rect x="115" y="206" width="8" height="38" fill="#C9A9E0"></rect>
+            <polygon points="90,244 112,244 108,254 86,254" fill="#EDE4F7"></polygon>
+            <polygon points="108,244 130,244 134,254 112,254" fill="#EDE4F7"></polygon>
+            <circle cx="110" cy="96" r="21" fill="#E8C4B8"></circle>
+            <polygon points="86,96 88,70 110,58 132,70 134,96 126,78 94,78" fill="#7A4FA8"></polygon>
+            <polygon points="84,84 84,120 96,110 94,86" fill="#7A4FA8"></polygon>
+            <polygon points="136,84 136,120 124,110 126,86" fill="#7A4FA8"></polygon>
+            <polygon points="124,124 158,150 152,160 118,134" fill="#E8C4B8"></polygon>
+            <rect x="150" y="150" width="7" height="58" rx="3" fill="#4A3562" transform="rotate(-14 153 150)"></rect>
+            <polygon points="130,206 148,196 152,204 134,214" fill="#4A3562"></polygon>
+            <circle cx="176" cy="222" r="3" fill="#5C4478"></circle>
+            <circle cx="188" cy="234" r="2" fill="#5C4478"></circle>
+          </svg>
+
+          <div style="display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;">
+            <h2 style="margin:0; font-size:31px; font-weight:800; letter-spacing:-.02em; color:#FFF4FA; line-height:1.15;">Hors ligne</h2>
+            <p style="margin:0; font-size:15px; line-height:1.65; color:#A794C0; max-width:290px; text-wrap:pretty;">{{ quipB }}</p>
+          </div>
+        </div>
+
+        <div style="position:absolute; left:40px; right:40px; bottom:44px; display:flex; flex-direction:column; align-items:center; gap:14px;">
+          <span onClick="{{ retryB }}" style="width:100%; height:56px; box-sizing:border-box; display:grid; place-items:center; border-radius:28px; border:1px solid {{ btnBorderB }}; color:{{ btnFgB }}; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; cursor:pointer;">{{ btnLabelB }}</span>
+          <span style="font-size:11px; color:#6E5A8A;">{{ footB }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:300px; display:flex; flex-direction:column; gap:20px; color:#A794C0; padding-top:60px;">
+      <h3 style="margin:0; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:#B98BE0; font-weight:600;">Comportement</h3>
+      <p style="margin:0; font-size:14px; line-height:1.7;">L'écran remplace le blanc du navigateur quand la PWA n'a pas de réseau, ou quand le Mac ne répond plus. Le bouton tente une reconnexion pendant 1,6 s puis affiche une nouvelle réplique — la fée s'obstine, ça fait la blague.</p>
+      <p style="margin:0; font-size:14px; line-height:1.7;">La fée est un dessin géométrique original, dans la même grammaire de facettes que l'icône : aucun personnage de la série n'est repris.</p>
+      <p style="margin:0; font-size:14px; line-height:1.7;">Côté implémentation : servir cette page depuis le service worker en réponse d'échec de navigation, et écouter <code style="color:#C9B6DE;">window.online</code> pour repasser sur la télécommande automatiquement.</p>
+    </div>
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const QUIPS_A = [
+  "Elle a agité sa baguette trois fois. Toujours rien. Le Wi-Fi, c'est plus fort que la magie.",
+  "Deuxième essai. La baguette a fait « pfff ». Ce n'est pas bon signe.",
+  "Elle commence à soupçonner le routeur. À juste titre.",
+  "Bon. Elle propose d'aller appuyer sur le gros bouton de la box.",
+  "La fée décline toute responsabilité et va se faire un chocolat chaud."
+];
+const QUIPS_B = [
+  "Aucune magie ne fonctionne sur un routeur débranché. C'est une règle assez stricte.",
+  "Toujours rien. La baguette est chargée, le réseau non.",
+  "Le sort est correct. C'est l'infrastructure qui pose problème.",
+  "Elle a vérifié : ce n'est pas elle, c'est le Wi-Fi.",
+  "Elle range la baguette. Réessayez quand la box aura fini de bouder."
+];
+
+class Component extends DCLogic {
+  state = { a: 0, b: 0, tryingA: false, tryingB: false };
+
+  attempt(k) {
+    if (this.state["trying" + k]) return;
+    this.setState({ ["trying" + k]: true });
+    setTimeout(() => this.setState(s => ({
+      ["trying" + k]: false,
+      [k.toLowerCase()]: Math.min(s[k.toLowerCase()] + 1, 4)
+    })), 1600);
+  }
+
+  renderVals() {
+    const s = this.state;
+    return {
+      quipA: QUIPS_A[s.a],
+      quipB: QUIPS_B[s.b],
+      floatStyleA: s.tryingA ? "animation:wr-shake .32s ease-in-out infinite" : "animation:wr-float 4.2s ease-in-out infinite",
+      wandStyleA: s.tryingA ? "animation:wr-shake .22s ease-in-out infinite" : "",
+      starColorA: s.tryingA ? "#FFCF5C" : "#6E5A8A",
+      dustColorA: s.tryingA ? "#FFCF5C" : "#3A2350",
+      btnBgA: s.tryingA ? "#FFCF5C" : "#FF2D95",
+      btnLabelA: s.tryingA ? "Incantation en cours…" : (s.a >= 4 ? "Insister quand même" : "Relancer le sortilège"),
+      footA: s.a === 0 ? "elle réessaie dès que le réseau revient" : "tentatives : " + s.a,
+      btnBorderB: s.tryingB ? "#FFCF5C" : "#3A2350",
+      btnFgB: s.tryingB ? "#FFCF5C" : "#C9B6DE",
+      btnLabelB: s.tryingB ? "tentative…" : "réessayer",
+      footB: s.b === 0 ? "Reconnexion automatique dès le retour du réseau" : "Essai " + s.b + " sur beaucoup",
+      retryA: () => this.attempt("A"),
+      retryB: () => this.attempt("B")
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -303,6 +303,100 @@
     font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#C08CFF;
   }
 
+  /* ---------- écran hors connexion ---------- */
+
+  /* Variante 2A du handoff. Il prescrit de la servir depuis un service
+     worker, en réponse d'échec de navigation : impossible ici, la page
+     n'étant pas en contexte sécurisé sur le LAN en HTTP (§8 des specs). Elle
+     est donc posée en superposition, ce qui couvre le cas qui compte — le
+     Mac qui ne répond plus — mais pas la page jamais chargée, où le
+     navigateur garde la main. */
+  /* La pastille et le pied sont ancrés, donc hors du flux : sans ces marges,
+     le contenu se centrerait sur la hauteur entière et passerait sous le
+     bouton. Elles réservent leur place, et le centrage se fait dans ce qui
+     reste. */
+  #offline{
+    position:fixed;inset:0;z-index:20;
+    background:var(--indigo-800);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    overflow:hidden;
+    padding:calc(80px + env(safe-area-inset-top)) 40px calc(140px + env(safe-area-inset-bottom));
+  }
+  #offline[hidden]{display:none}
+  #offline .halo{position:absolute;border-radius:50%}
+  #offline .halo.big{width:460px;height:460px;background:#2A0F4A}
+  #offline .halo.small{width:280px;height:280px;background:#3A1560}
+
+  #offline .badge{
+    position:absolute;top:calc(34px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:9px;
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--gold);background:rgba(255,207,92,.1);
+    padding:8px 16px;border-radius:999px;
+  }
+  #offline .badge i{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+
+  #offline .middle{
+    position:relative;display:flex;flex-direction:column;align-items:center;gap:36px;
+  }
+
+  /* Le handoff dessine sur un canvas de 844 px de haut. En dessous, la fée
+     et le texte passeraient sous le bouton : on rétrécit l'ensemble plutôt
+     que de laisser les blocs se recouvrir. Au-dessus de ce seuil, les
+     valeurs du handoff s'appliquent telles quelles. */
+  @media (max-height:760px){
+    /* Le sous-texte du pied passe sur deux lignes en dessous de 360 px de
+       large : la réserve du bas doit en tenir compte. */
+    #offline{
+      padding-top:calc(72px + env(safe-area-inset-top));
+      padding-bottom:calc(165px + env(safe-area-inset-bottom));
+    }
+    #offline .fairy svg{width:auto;height:28vh}
+    #offline .middle{gap:22px}
+    #offline .words{gap:12px}
+    #offline .words h2{font-size:26px}
+    #offline .words p{font-size:14px;line-height:1.55}
+  }
+  #offline .fairy{animation:wr-float 4.2s ease-in-out infinite}
+  #offline.trying .fairy{animation:wr-shake .32s ease-in-out infinite}
+  #offline.trying .wand{animation:wr-shake .22s ease-in-out infinite}
+
+  /* L'étoile et la poussière s'allument le temps de l'incantation. */
+  #offline .star{fill:var(--mauve-700)}
+  #offline .dust{fill:var(--indigo-500)}
+  #offline.trying .star,#offline.trying .dust{fill:var(--gold)}
+
+  #offline .words{
+    display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;
+  }
+  #offline .words h2{
+    font-size:31px;font-weight:800;letter-spacing:-.02em;
+    color:var(--white);line-height:1.15;
+  }
+  #offline .words p{
+    font-size:15px;font-weight:400;line-height:1.65;color:var(--lilac-400);
+    max-width:290px;text-wrap:pretty;
+  }
+
+  #offline .foot{
+    position:absolute;left:40px;right:40px;
+    bottom:calc(44px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;align-items:center;gap:16px;
+  }
+  #offline .foot button{
+    width:100%;height:56px;display:grid;place-items:center;
+    border-radius:28px;background:var(--fuchsia);
+    color:var(--indigo-800);font-size:14px;font-weight:600;letter-spacing:.02em;
+  }
+  #offline .foot button:active{background:var(--fuchsia-dk)}
+  #offline.trying .foot button{background:var(--gold)}
+  #offline .foot span{
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7A5F96;
+  }
+
+  @keyframes wr-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes wr-shake{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
+
   button{
     -webkit-appearance:none;appearance:none;border:0;
     background:transparent;color:inherit;font:inherit;
@@ -412,6 +506,56 @@
     <span class="over">écran du mac éteint</span>
     <span class="head">Toucher pour rallumer</span>
     <span class="note">La lecture continue</span>
+  </div>
+</div>
+
+<!-- Fée géométrique, dessin original du handoff : coordonnées reprises telles
+     quelles, comme il le demande explicitement. -->
+<div id="offline" hidden>
+  <div class="halo big"></div>
+  <div class="halo small"></div>
+
+  <span class="badge"><i></i>hors ligne</span>
+
+  <div class="middle">
+    <div class="fairy">
+      <svg viewBox="0 0 220 300" width="228" height="311" aria-hidden="true">
+        <g opacity="0.55">
+          <polygon points="98,118 74,58 22,34 14,86 62,110" fill="#8B36E8"/>
+          <polygon points="98,124 56,122 20,150 50,180 92,148" fill="#6C1FC4"/>
+          <polygon points="122,118 146,58 198,34 206,86 158,110" fill="#8B36E8"/>
+          <polygon points="122,124 164,122 200,150 170,180 128,148" fill="#6C1FC4"/>
+        </g>
+        <polygon points="96,92 124,92 142,182 78,182" fill="#FF2D95"/>
+        <polygon points="96,92 124,92 128,126 92,126" fill="#FF6FB5"/>
+        <rect x="97" y="182" width="8" height="40" fill="#FFB3D9"/>
+        <rect x="115" y="182" width="8" height="40" fill="#FFB3D9"/>
+        <polygon points="90,222 112,222 108,232 86,232" fill="#FFF4FA"/>
+        <polygon points="108,222 130,222 134,232 112,232" fill="#FFF4FA"/>
+        <circle cx="110" cy="72" r="21" fill="#FFD9C7"/>
+        <polygon points="86,72 88,46 110,34 132,46 134,72 126,54 94,54" fill="#FF9E3D"/>
+        <polygon points="84,60 84,96 96,86 94,62" fill="#FF9E3D"/>
+        <polygon points="136,60 136,96 124,86 126,62" fill="#FF9E3D"/>
+        <polygon points="124,100 152,146 142,152 116,110" fill="#FFD9C7"/>
+        <g class="wand" transform-origin="152 148">
+          <rect x="148" y="96" width="7" height="56" rx="3" fill="#C9B6DE" transform="rotate(24 152 148)"/>
+          <polygon class="star" points="172,74 178,88 192,94 178,100 172,114 166,100 152,94 166,88"/>
+        </g>
+        <circle class="dust" cx="196" cy="118" r="4"/>
+        <circle class="dust" cx="184" cy="136" r="3"/>
+        <circle class="dust" cx="200" cy="150" r="2"/>
+      </svg>
+    </div>
+
+    <div class="words">
+      <h2>Le sortilège<br>est tombé à plat</h2>
+      <p id="quip"></p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <button id="retry"></button>
+    <span id="tries"></span>
   </div>
 </div>
 
@@ -594,6 +738,22 @@ async function send(path, body) {
 
 function online(ok) {
   link.classList.toggle("off", !ok);
+
+  if (ok) {
+    clearTimeout(offlineTimer);
+    offlineTimer = null;
+    showOffline(false);
+  } else if (offlineTimer === null && offlineScreen.hidden) {
+    /* Délai de grâce. Le flux SSE hoquette à chaque bascule de réseau et se
+       rétablit de lui-même : couvrir l'écran à chaque hoquet serait
+       insupportable. Le témoin de la barre du haut, lui, réagit tout de
+       suite — il est discret, c'est son rôle. */
+    offlineTimer = setTimeout(() => {
+      offlineTimer = null;
+      showOffline(true);
+    }, OFFLINE_GRACE);
+  }
+
   render();
 }
 
@@ -624,11 +784,17 @@ function apply(s) {
   render();
 }
 
+/* EventSource se reconnecte seul, mais reste fermé si le serveur a répondu
+   puis coupé net. On garde la référence pour pouvoir la remplacer quand la
+   reconnexion est demandée depuis l'écran hors connexion. */
+let stream = null;
+
 function listen() {
-  const es = new EventSource("/api/events?t=" + encodeURIComponent(TOKEN));
-  es.addEventListener("state", e => { apply(JSON.parse(e.data)); online(true); });
-  es.onopen  = () => online(true);
-  es.onerror = () => online(false);
+  if (stream) { try { stream.close(); } catch (e) {} }
+  stream = new EventSource("/api/events?t=" + encodeURIComponent(TOKEN));
+  stream.addEventListener("state", e => { apply(JSON.parse(e.data)); online(true); });
+  stream.onopen  = () => online(true);
+  stream.onerror = () => online(false);
 }
 
 async function refresh() {
@@ -839,6 +1005,83 @@ document.addEventListener("gesturestart", e => e.preventDefault());
 
 /* Le nom du Mac vient de l'URL : c'est déjà lui qu'on a saisi pour venir. */
 document.getElementById("device").textContent = location.hostname.replace(/\.local$/, "");
+
+/* ---------- écran hors connexion ---------- */
+
+/* Répliques du handoff, jouées dans l'ordre : la fée s'obstine, puis
+   renonce. On ne redescend jamais dans la liste avant le retour du réseau. */
+const OFFLINE_QUIPS = [
+  "Elle a agité sa baguette trois fois. Toujours rien. Le Wi-Fi, c'est plus fort que la magie.",
+  "Deuxième essai. La baguette a fait « pfff ». Ce n'est pas bon signe.",
+  "Elle commence à soupçonner le routeur. À juste titre.",
+  "Bon. Elle propose d'aller appuyer sur le gros bouton de la box.",
+  "La fée décline toute responsabilité et va se faire un chocolat chaud."
+];
+
+const OFFLINE_GRACE = 3000;   // avant de couvrir l'écran
+const OFFLINE_TRY   = 1600;   // plancher d'incantation, pour qu'elle se voie
+
+const offlineScreen = document.getElementById("offline");
+const retryBtn = document.getElementById("retry");
+
+let quipIndex = 0, trying = false, offlineTimer = null;
+
+function renderOffline() {
+  offlineScreen.classList.toggle("trying", trying);
+  document.getElementById("quip").textContent = OFFLINE_QUIPS[quipIndex];
+  retryBtn.textContent = trying ? "Incantation en cours…"
+    : (quipIndex >= OFFLINE_QUIPS.length - 1 ? "Insister quand même" : "Relancer le sortilège");
+  document.getElementById("tries").textContent = quipIndex === 0
+    ? "elle réessaie dès que le réseau revient"
+    : "tentatives : " + quipIndex;
+}
+
+function showOffline(shown) {
+  if (shown === !offlineScreen.hidden) return;
+  offlineScreen.hidden = !shown;
+  /* Rien n'est conservé d'une fois sur l'autre : on repart de la première
+     réplique dès que l'écran a disparu. */
+  if (!shown) { quipIndex = 0; trying = false; }
+  renderOffline();
+}
+
+/* La tentative est un vrai appel au Mac, pas une animation de complaisance.
+   Le plancher de 1600 ms n'est pas une temporisation feinte : sans lui, un
+   échec instantané rendrait l'incantation illisible. */
+retryBtn.onclick = async () => {
+  if (trying) return;
+  trying = true;
+  renderOffline();
+
+  const plancher = new Promise(r => setTimeout(r, OFFLINE_TRY));
+  let joignable = false;
+
+  try {
+    const r = await fetch("/api/state", { headers: { "X-Token": TOKEN }, cache: "no-store" });
+    if (r.ok) { joignable = true; apply(await r.json()); }
+  } catch (e) {
+    /* Le Mac ne répond pas : la fée en fera une affaire personnelle. */
+  }
+
+  await plancher;
+  trying = false;
+
+  if (joignable) {
+    /* Le flux a pu rester fermé pendant la coupure : on le rouvre plutôt que
+       d'attendre une reconnexion qui ne viendra pas. */
+    listen();
+    online(true);
+  } else {
+    quipIndex = Math.min(quipIndex + 1, OFFLINE_QUIPS.length - 1);
+    renderOffline();
+  }
+};
+
+/* Le système signale le retour du réseau : la fée retente d'elle-même,
+   sans qu'on ait à appuyer. */
+window.addEventListener("online", () => {
+  if (!offlineScreen.hidden && !trying) retryBtn.click();
+});
 
 /* L'écran de lancement s'efface dès que le premier état est là, mais pas
    avant un court temps de pose : sans lui, il disparaîtrait en un clin d'œil

@@ -344,7 +344,19 @@ Le sélecteur est en icônes seules, délibérément distinct du sélecteur de s
 
 L'appui sans glissement reste inerte, comme prévu au §7.1 : il n'a pas été détourné pour basculer de grandeur, bien qu'il soit la cible la plus facile à viser dans le noir.
 
-### 7.4 Détails techniques d'interface
+### 7.4 Écran hors connexion
+
+Variante **2A « Complice »** du handoff. Une fée a raté son sort ; le bouton relance l'incantation, échoue, et sert une réplique différente à chaque essai, jusqu'à ce qu'elle renonce et aille se faire un chocolat chaud.
+
+**Il ne peut pas venir d'un service worker**, contrairement à ce que prescrit le handoff : la page n'est pas en contexte sécurisé sur le LAN en HTTP (§8). Il est donc posé en superposition dans `index.html`. La différence est réelle et il faut la connaître : l'écran couvre le cas qui compte — le Mac qui ne répond plus, ou le Wi-Fi qui tombe pendant l'usage — mais pas celui d'une page jamais chargée, où le navigateur garde la main et affiche sa propre erreur.
+
+- **Délai de grâce de 3 s** avant de couvrir l'écran. Le flux SSE hoquette à chaque bascule de réseau et se rétablit seul ; recouvrir l'interface à chaque hoquet serait insupportable. Le témoin de la barre du haut, lui, réagit immédiatement — il est discret, c'est son rôle.
+- **La tentative est un vrai appel** au Mac, pas une animation de complaisance : succès, on revient à la télécommande et le flux est rouvert ; échec, réplique suivante. Le plancher de 1600 ms n'est pas une temporisation feinte — sans lui, un échec instantané rendrait l'incantation illisible.
+- **Rien n'est conservé** : on repart de la première réplique dès que l'écran a disparu, comme le demande le handoff.
+- `window.addEventListener("online")` relance une tentative sans qu'on ait à appuyer.
+- **Adaptation aux écrans courts.** Le handoff dessine sur un canvas de 844 px ; en dessous de 760 px de haut, la fée et les textes sont réduits, faute de quoi ils passeraient sous le bouton. Au-dessus, les valeurs du handoff s'appliquent telles quelles — la fée y fait ses 311 px exacts.
+
+### 7.5 Détails techniques d'interface
 
 - `touch-action: none` sur la zone de glissement, sinon Safari déclenche le pull-to-refresh et le rebond de scroll.
 - `user-select: none` et `-webkit-touch-callout: none` : pas de loupe de sélection sur appui long.
@@ -365,7 +377,7 @@ Ajout via Safari → Partager → « Sur l'écran d'accueil ». L'URL enregistr�
 - `apple-touch-icon` en 180 × 180, sinon iOS génère une capture d'écran comme icône.
 - Un `manifest.webmanifest` malgré tout, pour la cohérence et l'avenir.
 
-**Ce qui ne marchera pas, et c'est assumé.** En HTTP sur le LAN, la page n'est pas en contexte sécurisé. Donc : pas de service worker (aucune mise en cache hors ligne) et pas de Wake Lock (l'écran de l'iPhone s'éteindra tout seul). Ce n'est pas gênant ici — l'app est inutile sans le serveur de toute façon, et on rallume l'iPhone d'un appui. Ce n'est donc pas une PWA au sens strict, mais une page web en plein écran avec une icône. La différence est invisible à l'usage.
+**Ce qui ne marchera pas, et c'est assumé.** En HTTP sur le LAN, la page n'est pas en contexte sécurisé. Donc : pas de service worker (aucune mise en cache hors ligne, et l'écran hors connexion du §7.4 ne peut être qu'une superposition, jamais une page servie en réponse d'échec de navigation) et pas de Wake Lock (l'écran de l'iPhone s'éteindra tout seul). Ce n'est pas gênant ici — l'app est inutile sans le serveur de toute façon, et on rallume l'iPhone d'un appui. Ce n'est donc pas une PWA au sens strict, mais une page web en plein écran avec une icône. La différence est invisible à l'usage.
 
 Si tu veux plus tard la vraie PWA : `mkcert` avec l'autorité installée sur l'iPhone, ou `tailscale serve` qui fournit un certificat valide et ouvre en prime l'accès depuis l'extérieur.
 
