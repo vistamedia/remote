@@ -143,10 +143,16 @@ on ecrirePlist()
 </plist>"
 
 	do shell script "/bin/mkdir -p " & quoted form of ((POSIX path of (path to home folder)) & "Library/LaunchAgents")
-	set leFichier to open for access (POSIX file cheminPlist) with write permission
-	set eof leFichier to 0
-	write leContenu to leFichier as «class utf8»
-	close access leFichier
+
+	(* L'écriture passe par Foundation, et non par « open for access ». La
+	   coercion « POSIX file » échoue dans un applet qui charge des
+	   frameworks : les Standard Additions et use framework se disputent le
+	   terme, et la conversion en «class fsrf» part en erreur -1700. Mesuré
+	   sur un applet compilé, c'est ce qui faisait échouer l'installation
+	   entière. *)
+	set nsContenu to current application's NSString's stringWithString:leContenu
+	set ecrit to nsContenu's writeToFile:cheminPlist atomically:true encoding:(current application's NSUTF8StringEncoding) |error|:(missing value)
+	if ecrit is false then error "impossible d'écrire " & cheminPlist
 end ecrirePlist
 
 (* Le premier démarrage lit l'état audio et génère le token : on laisse au
