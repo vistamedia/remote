@@ -24,10 +24,14 @@ ne sort de chez vous.
 - **Le volume**, en glissant le pouce n'importe où sur l'écran — la surface
   entière est le curseur, on n'a pas à viser. Boutons plus et moins par pas
   de 5, et sourdine.
+- **La luminosité de l'écran**, réglée par le même curseur : un sélecteur en
+  haut à gauche choisit ce que le pouce commande. Le remplissage vire à l'or,
+  pour qu'on sache lequel des deux on tient sans avoir à lire.
 - **La lecture** : pause, reprise, piste suivante et précédente, avance et
   recul de dix secondes. Ce que la source accepte, voir plus bas.
 - **L'écran du Mac**, qu'on éteint sans interrompre le son. C'est le geste qui
   a motivé le projet : le film continue, la pièce redevient sombre.
+- **Le plein écran** de ce qui joue, quand l'application le permet.
 - **Ce qui joue**, affiché en bas — titre, source, position quand elles sont
   publiées.
 
@@ -79,6 +83,33 @@ L'adresse à ouvrir, token compris, s'affiche au démarrage. Ajoutez-la à
 l'écran d'accueil depuis Safari — Partager, puis « Sur l'écran d'accueil » —
 pour l'avoir en plein écran avec son icône.
 
+## Autorisations
+
+**Rien de tout cela n'est obligatoire.** Le volume, la sourdine, la luminosité
+et l'écran fonctionnent sans le moindre réglage, de même que VLC, QuickTime,
+Music et Spotify — position, plein écran et transport compris. Ce qui n'est pas
+autorisé est simplement masqué dans l'interface, jamais affiché en panne.
+
+Deux commandes font exception, et l'app de barre de menus les rappelle sous
+**« Autorisations et réglages »**, avec un bouton qui ouvre le bon panneau.
+
+**Le plein écran dans un navigateur** exige l'Accessibilité, seule voie pour
+envoyer une touche à une application. Réglages Système → Confidentialité et
+sécurité → Accessibilité, puis ajoutez le programme qui fait tourner le
+serveur — `/usr/local/bin/node`, ou le chemin qu'indique le menu. Redémarrez
+ensuite le serveur. L'autorisation n'est jamais réclamée d'elle-même : elle est
+constatée, pas demandée, pour qu'aucun dialogue n'apparaisse sur une machine
+où personne n'a rien installé.
+
+**La barre de lecture sur Netflix, Prime Video et YouTube** demande davantage.
+Ces sites ne publient pas leur position à macOS ; elle ne peut être lue que
+dans la page elle-même. Dans Safari : Réglages → Avancé → « Afficher les
+fonctionnalités pour les développeurs web », puis menu Développement →
+« Autoriser JavaScript depuis les Apple Events ». Dans Chrome, le même réglage
+est au menu Affichage → Développeur. **Firefox n'expose rien à AppleScript** :
+la barre et les deux sauts de dix secondes y resteront masqués, quel que soit
+le réglage.
+
 ## Ce que ça ne fait pas
 
 Autant le dire tout de suite, ces limites ne se contournent pas.
@@ -100,9 +131,12 @@ compris depuis les touches média du clavier, ce qui montre bien que le
 problème n'est pas ici. Ils fonctionnent avec Music, Spotify, VLC et YouTube.
 
 **Netflix ne publie pas non plus le nom de ce qu'on regarde**, seulement
-« Netflix ». Prime Video, lui, publie le vrai titre. La barre de progression
-se masque quand la source ne donne ni durée ni position, plutôt que de rester
-figée à zéro.
+« Netflix », ni sa durée, ni sa position. Prime Video publie le vrai titre et
+la durée, jamais la position. La barre de progression et les deux sauts de dix
+secondes se masquent alors, plutôt que de rester figés à zéro : un saut relatif
+sans origine renverrait le film à son début. Ils reviennent dès que la position
+est lisible — sur VLC, Music et Spotify sans rien régler, sur Netflix et
+YouTube si la page est interrogeable, voir *Autorisations*.
 
 **Il n'y a pas de sélecteur de source.** macOS ne maintient qu'une seule
 session de lecture à la fois et ne permet pas d'en choisir une : on nomme

@@ -93,6 +93,7 @@ on construireMenu()
 	ajouterItem("Copier l'adresse", "copierAdresse:", true)
 	leMenu's addItem:(current application's NSMenuItem's separatorItem())
 	ajouterItem("Redémarrer le serveur", "redemarrerServeur:", true)
+	ajouterItem("Autorisations et réglages", "autorisations:", true)
 	leMenu's addItem:(current application's NSMenuItem's separatorItem())
 	ajouterItem("À propos de Winx Remote", "aPropos:", true)
 	ajouterItem("Quitter Winx Remote", "quitterApp:", true)
@@ -222,6 +223,90 @@ on redemarrerServeur:sender
 		display alert "Redémarrage impossible" message leMessage as warning
 	end try
 end redemarrerServeur:
+
+(* Chemin réel du programme qui fait tourner le serveur. C'est lui, et non
+   l'app de barre de menus, qu'il faut autoriser : il est lancé par le
+   LaunchAgent, et c'est son processus qui parle au système. *)
+on cheminNode()
+	try
+		set lePlist to (POSIX path of (path to home folder)) & "Library/LaunchAgents/local.remote.plist"
+		return do shell script "/usr/libexec/PlistBuddy -c 'Print :ProgramArguments:0' " & quoted form of lePlist
+	on error
+		return "/usr/local/bin/node"
+	end try
+end cheminNode
+
+(* Deux commandes seulement réclament un réglage, et aucune n'est demandée
+   spontanément : l'Accessibilité ne se réclame jamais d'elle-même, et le
+   réglage JavaScript de Safari encore moins. Sans cet écran, rien ne dit à
+   l'utilisateur pourquoi un bouton reste absent. *)
+on autorisations:sender
+	current application's NSApp's activateIgnoringOtherApps:true
+
+	if serveurActif then
+		set ligneServeur to "Serveur : actif"
+	else
+		set ligneServeur to "Serveur : arrêté"
+	end if
+
+	set ligneLumiere to "Luminosité : état inconnu"
+	set leDict to lireEtat()
+	if leDict is not missing value then
+		set laValeur to leDict's objectForKey:"brightnessControllable"
+		if laValeur is not missing value then
+			if (laValeur as boolean) then
+				set ligneLumiere to "Luminosité : pilotable"
+			else
+				set ligneLumiere to "Luminosité : non pilotable sur cet écran"
+			end if
+		end if
+	end if
+
+	set leTexte to ligneServeur & "
+" & ligneLumiere & "
+
+Le volume, la sourdine, l'écran et la luminosité fonctionnent sans rien régler. VLC, QuickTime, Music et Spotify aussi, position et plein écran compris.
+
+Deux commandes font exception.
+
+PLEIN ÉCRAN DANS UN NAVIGATEUR
+Réglages Système → Confidentialité et sécurité → Accessibilité, puis ajouter ce programme :
+
+" & cheminNode() & "
+
+Redémarrer ensuite le serveur depuis ce menu.
+
+BARRE DE LECTURE SUR NETFLIX, PRIME VIDEO, YOUTUBE
+Ces sites ne publient pas leur position à macOS : elle ne peut être lue que dans la page elle-même.
+Safari → Réglages → Avancé → « Afficher les fonctionnalités pour les développeurs web », puis menu Développement → « Autoriser JavaScript depuis les Apple Events ».
+Dans Chrome, le même réglage se trouve au menu Affichage → Développeur.
+Firefox n'expose rien à AppleScript : la barre et les sauts de dix secondes y resteront masqués.
+
+Rien de tout cela n'est obligatoire. Ce qui n'est pas autorisé est simplement masqué, jamais affiché en panne."
+
+	set leChoix to button returned of (display alert "Autorisations et réglages" message leTexte buttons {"Fermer", "Ouvrir l'Accessibilité"} default button "Fermer")
+
+	if leChoix is "Ouvrir l'Accessibilité" then
+		(* Le programme est révélé dans le Finder en même temps : on ne peut
+		   pas l'ajouter à la liste sans mettre la main dessus, et un binaire
+		   en ligne de commande ne se trouve pas au sélecteur habituel. *)
+		do shell script "/usr/bin/open " & quoted form of "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+		delay 1
+		do shell script "/usr/bin/open -R " & quoted form of cheminNode()
+	end if
+end autorisations:
+
+(* État complet du serveur, tel qu'il le publie à la télécommande. *)
+on lireEtat()
+	if leToken is "" then return missing value
+	try
+		set laSortie to do shell script "/usr/bin/curl -s -m 2 -H " & quoted form of ("X-Token: " & leToken) & " http://127.0.0.1:8765/api/state"
+		set lesOctets to (current application's NSString's stringWithString:laSortie)'s dataUsingEncoding:(current application's NSUTF8StringEncoding)
+		return current application's NSJSONSerialization's JSONObjectWithData:lesOctets options:0 |error|:(missing value)
+	on error
+		return missing value
+	end try
+end lireEtat
 
 (* Une app de barre de menus n'a pas de fenêtre : sans cette activation, le
    dialogue s'ouvrirait derrière l'application de premier plan. *)

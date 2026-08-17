@@ -265,6 +265,26 @@ Le danger de `f` est qu'il s'écrit dans la page si le curseur se trouve dans un
 
 **L'écriture est relue, jamais crue.** Sans image à afficher — fichier audio, ou playlist vide — VLC accepte la commande sans l'appliquer. Le bouton aurait affiché le contraire de l'écran du Mac. Le refus est immédiat, mesuré, donc une seule relecture suffit et rien ne clignote. Même raison pour exiger un média chargé avant d'annoncer la commande disponible.
 
+### 6.5 Position lue dans la page
+
+Netflix ne publie à macOS **ni durée, ni position, ni horodatage** — vérifié à la source : son dictionnaire MediaRemote ne contient que le titre, la pochette et le taux de lecture. Prime Video publie la durée seule. Sans position, aucune barre n'est juste, et un saut relatif n'a pas d'origine.
+
+L'élément `<video>` de la page, lui, sait tout. `lib/webplayer.js` l'interroge par `do JavaScript` :
+
+| Action | Expression |
+|---|---|
+| Lire | `v.currentTime`, `v.duration`, `v.paused` |
+| Déplacer | `v.currentTime = n` |
+| Plein écran | `v.webkitEnterFullScreen()` |
+
+L'élément retenu est celui qui joue, sinon le plus long de ceux qui ont des données : une page porte souvent plusieurs vidéos — aperçus au survol, bandes-annonces, publicités.
+
+`webkitEnterFullScreen` est l'API vidéo native, distincte de l'API Fullscreen du document : elle ne réclame **pas de geste utilisateur**, ce qui la rend utilisable depuis une télécommande, et elle vise la vidéo plutôt que la fenêtre. Le plein écran l'essaie donc avant la frappe de touche du §6.4.
+
+**C'est un complément, jamais un remplacement.** Quand la page ne répond pas, l'état retombe sur celui du système. La page ne fournit que la position et la durée : `playing` reste à `media.js`, qui porte la bascule optimiste du bouton de lecture — l'écraser le ferait clignoter à chaque sondage.
+
+**Firefox est hors de portée.** Il n'expose rien à AppleScript, ni `do JavaScript` ni son équivalent. Sur Netflix dans Firefox, la barre et les sauts restent masqués quel que soit le réglage. Seuls Safari et Chrome répondent, et seulement après activation manuelle (§10).
+
 ---
 
 ## 7. Interface
@@ -374,6 +394,18 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/local.remote.plist
 
 **La veille du Mac.** Point à ne pas négliger : si le Mac s'endort, le serveur devient injoignable et la télécommande est morte. En pratique, une lecture audio en cours empêche la veille système, donc le cas nominal fonctionne. Mais si la musique est en pause et que le Mac s'endort, l'iPhone ne pourra plus rien faire — y compris relancer la lecture. Deux options : régler « empêcher la veille automatique lorsque l'écran est éteint » sur secteur, ou accepter la limite. À trancher à l'usage plutôt qu'à l'avance.
 
+**Les autorisations ne sont jamais demandées, seulement constatées.** C'est une règle du projet : sur le Mac de quelqu'un qui n'a rien installé lui-même, aucun dialogue incompréhensible ne doit surgir au démarrage. `AXIsProcessTrusted()` constate l'Accessibilité sans la réclamer ; `NSWorkspace` donne l'application au premier plan sans rien exiger du tout. La contrepartie est qu'aucune invite ne rappelle à l'utilisateur ce qui manque — d'où l'écran **« Autorisations et réglages »** de l'app de barre de menus, qui énonce les deux réglages facultatifs, affiche l'état du serveur et de la luminosité, et ouvre le panneau d'Accessibilité en révélant le programme à y ajouter.
+
+| Commande | Réglage | Sans lui |
+|---|---|---|
+| Volume, sourdine, écran, luminosité | aucun | — |
+| Transport et position sur VLC, QuickTime, Music, Spotify | aucun | — |
+| Plein écran sur VLC et QuickTime | aucun | — |
+| Plein écran dans un navigateur | Accessibilité pour le programme du LaunchAgent | bouton masqué |
+| Barre et sauts sur Netflix, Prime Video, YouTube | « Autoriser JavaScript depuis les Apple Events » (Safari, Chrome) | barre et sauts masqués |
+
+Le programme à autoriser est celui que lance le LaunchAgent — `node`, et non l'app de barre de menus : c'est son processus qui parle au système. Le menu en donne le chemin exact, lu dans le plist.
+
 **Installer sur une machine qu'on ne connaît pas.** Chaque Mac reçoit sa propre installation, et la personne qui s'en sert ne doit rien avoir à configurer. `install.sh` prend donc tout en charge : vérifier que Node est présent et s'arrêter avec un message clair sinon, générer le token, écrire le plist, charger le LaunchAgent, lire le nom Bonjour de la machine et afficher l'URL à ajouter à l'écran d'accueil. Il doit aussi constater l'absence de `nowplaying-cli` sans échouer : le média bascule alors sur le repli AppleScript du §6.3, et l'interface masque ce qu'elle ne sait pas faire plutôt que d'afficher des boutons morts.
 
 **Arborescence.**
@@ -387,6 +419,7 @@ remote/
 │   ├── media.js       nowplaying-cli + repli AppleScript
 │   ├── display.js     pmset, caffeinate
 │   ├── fullscreen.js  NSWorkspace, Apple Events, dégradé Accessibilité
+│   ├── webplayer.js   position lue dans la balise vidéo de la page
 │   ├── state.js       composition de l'état, sondage conditionnel
 │   └── sse.js
 ├── public/
@@ -439,6 +472,8 @@ Deux commandes ont été ajoutées après coup : la luminosité de l'écran (§6
 - La luminosité repose sur `DisplayServices`, framework privé d'Apple : même exposition que `nowplaying-cli` à une mise à jour majeure de macOS. Elle ne couvre que l'écran principal, la plupart des écrans externes refusant de rendre leur luminosité.
 - Le plein écran d'une vidéo web reste hors de portée sans l'autorisation Accessibilité. Avec elle, la frappe de `f` atteint le lecteur, mais reste retenue tant que le curseur est dans un champ de saisie : le bouton ne fait alors rien, sans qu'on puisse le prévoir avant l'appui.
 - VLC n'expose pas la présence d'une piste vidéo : la commande est annoncée disponible dès qu'un média est chargé, et le refus n'apparaît qu'à la relecture qui suit l'écriture.
+- Firefox n'expose rien à AppleScript. La position lue dans la page, donc la barre et les sauts de dix secondes, n'y fonctionneront jamais — pas plus que le titre de l'onglet évoqué plus haut. Seuls Safari et Chrome répondent.
+- Netflix ne publie aucune position : sans le réglage du §10, la barre et les deux sauts restent masqués. C'est délibéré — les afficher supposait d'inventer une origine, ce qui renvoyait le film à son début.
 - Une installation par Mac, à vérifier machine par machine (§2). Rien n'est mutualisé, rien ne se synchronise.
 - Node.js doit être installé au préalable sur chaque machine.
 
