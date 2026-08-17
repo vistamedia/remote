@@ -764,11 +764,45 @@ function seekTo(position) {
   send("/media", { action: "seek", position: elapsed });
 }
 
-document.getElementById("seek").addEventListener("pointerdown", e => {
-  if (duration === null) return;
-  const r = e.currentTarget.getBoundingClientRect();
-  seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration);
+/* Glissement sur la barre de lecture. L'affichage suit le doigt sans rien
+   envoyer : chaque saut coûte un appel système, et seule la position au
+   relâchement compte. La fenêtre de garde est repoussée à chaque
+   déplacement, faute de quoi le sondage ramènerait le curseur sous le
+   doigt. */
+const seekBar = document.getElementById("seek");
+let seeking = false;
+
+function positionAt(clientX) {
+  const r = seekBar.getBoundingClientRect();
+  return Math.round(Math.max(0, Math.min(1, (clientX - r.left) / r.width)) * duration);
+}
+
+function moveSeek(clientX) {
+  elapsed = positionAt(clientX);
+  guardUntil = Date.now() + GUARD;
+  render();
+}
+
+seekBar.addEventListener("pointerdown", e => {
+  if (duration === null || elapsed === null) return;
+  /* Même capture défensive que pour le volume : elle échoue sur certains
+     pointeurs sans que le glissement doive s'interrompre. */
+  try { seekBar.setPointerCapture(e.pointerId); } catch (err) {}
+  seeking = true;
+  moveSeek(e.clientX);
 });
+
+seekBar.addEventListener("pointermove", e => {
+  if (seeking) moveSeek(e.clientX);
+});
+
+function endSeek() {
+  if (!seeking) return;
+  seeking = false;
+  seekTo(elapsed);
+}
+seekBar.addEventListener("pointerup", endSeek);
+seekBar.addEventListener("pointercancel", endSeek);
 
 /* Le plein écran ne s'affiche pas de façon optimiste. Le serveur relit
    l'application après avoir écrit — VLC accepte parfois sans appliquer — et

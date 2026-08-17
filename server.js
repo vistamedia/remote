@@ -22,6 +22,7 @@ const audio = require("./lib/audio.js");
 const brightness = require("./lib/brightness.js");
 const fullscreen = require("./lib/fullscreen.js");
 const media = require("./lib/media.js");
+const webplayer = require("./lib/webplayer.js");
 const display = require("./lib/display.js");
 const sse = require("./lib/sse.js");
 const state = require("./lib/state.js");
@@ -244,10 +245,6 @@ async function handleMute(req, res) {
 }
 
 async function handleMedia(req, res) {
-  if (!media.isAvailable()) {
-    return sendJson(res, 503, { error: "aucun backend média disponible" });
-  }
-
   const body = await readBody(req);
 
   /* Déplacement à une position absolue, en secondes. */
@@ -255,10 +252,25 @@ async function handleMedia(req, res) {
     if (!Number.isFinite(body.position) || body.position < 0 || body.position > 86400) {
       throw new BadRequest("position doit être un nombre de secondes de 0 à 86400");
     }
-    await media.seek(body.position);
+
+    /* La page sait sauter exactement, là où MediaRemote dépend des commandes
+       que le site déclare — Netflix n'en déclare presque aucune. Elle a donc
+       la main dès qu'elle répond. */
+    if (webplayer.isAvailable()) {
+      await webplayer.seek(fullscreen.snapshot().app, body.position);
+    } else if (media.isAvailable()) {
+      await media.seek(body.position);
+    } else {
+      return sendJson(res, 503, { error: "aucun backend média disponible" });
+    }
+
     const apres = state.compose();
     state.publish(apres);
     return sendJson(res, 200, apres);
+  }
+
+  if (!media.isAvailable()) {
+    return sendJson(res, 503, { error: "aucun backend média disponible" });
   }
 
   if (MEDIA_ACTIONS.indexOf(body.action) === -1) {
