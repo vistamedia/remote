@@ -284,6 +284,10 @@ Cette incrustation **disparaît du DOM** dès que les contrôles se masquent. Le
 
 **Plusieurs chemins sont gardés**, huit au plus, et non un seul : en passant d'une plateforme à l'autre puis en revenant, une mémoire à une entrée était écrasée entre-temps, et le nom ne revenait qu'à la prochaine apparition des contrôles — donc, en pratique, qu'à la mise en pause. Un redémarrage du serveur vide cette mémoire : le titre ne revient alors qu'au prochain affichage des contrôles.
 
+**Prime Video nomme ses éléments.** Le SDK de son lecteur expose `atvwebplayersdk-title-text` pour l'œuvre et `atvwebplayersdk-episode-info` pour l'épisode — des noms sémantiques, là encore préférables aux classes voisines, générées. Les deux sont cherchés **séparément** : l'épisode reste souvent en place quand le titre a déjà disparu, et les lier faisait perdre les deux. La mémoire complète donc chaque champ indépendamment, plutôt que d'écraser ce qu'elle sait par une lecture partielle.
+
+**Le titre, l'épisode et la plateforme sont trois choses distinctes.** Le badge nomme la plateforme, le titre l'œuvre, le sous-titre l'épisode — ou l'artiste, pour de la musique. Le préfixe de plateforme est retiré du titre quelle que soit sa provenance : Prime Video préfixe le sien jusque dans le titre de l'onglet, et le répéter sous un badge qui l'affiche déjà n'apprend rien.
+
 **La source est déduite de l'adresse de la page**, et non de la session du système. Celle-ci rapporte ce qui *joue*, pas ce qui est *affiché* : les deux diffèrent dès qu'un second onglet garde une lecture en pause, et le badge annonçait alors une plateforme pendant qu'on en regardait une autre. Le titre du système ne l'emporte que s'il nomme autre chose que sa propre plateforme, celle d'avant comprise.
 
 Le titre de la page ne s'impose que là où le système n'en donne pas de vrai — reconnaissable au fait qu'il est identique au nom de la source. Prime Video, qui publie un titre complet, garde la main.

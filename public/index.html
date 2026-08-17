@@ -636,7 +636,7 @@ let duration = null, elapsed = null, sourceName = null;
 /* Faux uniquement quand le serveur a constaté qu'imposer une position casse
    la lecture — Netflix la refuse et retombe sur son écran d'erreur. */
 let seekOk = true;
-let title = null, artist = null;
+let title = null, artist = null, episode = null;
 let screenOff = false;
 let guardUntil = 0;
 
@@ -678,10 +678,10 @@ function render() {
 
   document.getElementById("title").textContent = title || "Rien en lecture";
 
-  /* Le badge porte désormais le nom de la source : le répéter sous le titre
-     n'apprendrait rien. Le sous-titre est rendu à l'artiste seul. */
+  /* Le badge porte le nom de la source, le titre celui de l'œuvre : le
+     sous-titre reçoit donc l'épisode, ou l'artiste pour de la musique. */
   const sub = document.getElementById("subtitle");
-  sub.textContent = artist || (title ? "" : "Aucune source détectée");
+  sub.textContent = episode || artist || (title ? "" : "Aucune source détectée");
   sub.style.display = sub.textContent ? "" : "none";
 
   sourceBadge.textContent = sourceName || "";
@@ -806,6 +806,7 @@ function apply(s) {
   playing = Boolean(m.playing);
   title = m.title || null;
   artist = m.artist || null;
+  episode = m.episode || null;
   sourceName = m.source || null;
   duration = typeof m.duration === "number" ? m.duration : null;
   seekOk = m.seekable !== false;
