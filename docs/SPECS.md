@@ -282,6 +282,10 @@ L'élément `<video>` de la page, lui, sait tout. `lib/webplayer.js` l'interroge
 
 Cette incrustation **disparaît du DOM** dès que les contrôles se masquent. Le titre n'est donc lisible que par intermittence, et il est retenu, associé au chemin de la page : Netflix change de chemin à chaque épisode, ce qui suffit à savoir quand l'oublier. Sans cette mémoire, le nom apparaîtrait et s'effacerait au gré des mouvements de souris devant le Mac.
 
+**Plusieurs chemins sont gardés**, huit au plus, et non un seul : en passant d'une plateforme à l'autre puis en revenant, une mémoire à une entrée était écrasée entre-temps, et le nom ne revenait qu'à la prochaine apparition des contrôles — donc, en pratique, qu'à la mise en pause. Un redémarrage du serveur vide cette mémoire : le titre ne revient alors qu'au prochain affichage des contrôles.
+
+**La source est déduite de l'adresse de la page**, et non de la session du système. Celle-ci rapporte ce qui *joue*, pas ce qui est *affiché* : les deux diffèrent dès qu'un second onglet garde une lecture en pause, et le badge annonçait alors une plateforme pendant qu'on en regardait une autre. Le titre du système ne l'emporte que s'il nomme autre chose que sa propre plateforme, celle d'avant comprise.
+
 Le titre de la page ne s'impose que là où le système n'en donne pas de vrai — reconnaissable au fait qu'il est identique au nom de la source. Prime Video, qui publie un titre complet, garde la main.
 
 L'élément retenu est celui qui joue, sinon le plus long de ceux qui ont des données : une page porte souvent plusieurs vidéos — aperçus au survol, bandes-annonces, publicités.
