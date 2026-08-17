@@ -279,7 +279,7 @@ Redémarrer ensuite le serveur depuis ce menu.
 BARRE DE LECTURE SUR NETFLIX, PRIME VIDEO, YOUTUBE
 Ces sites ne publient pas leur position à macOS : elle ne peut être lue que dans la page elle-même.
 Safari → Réglages → Avancé → « Afficher les fonctionnalités pour les développeurs web », puis menu Développement → « Autoriser JavaScript depuis les Apple Events ».
-Dans Chrome, le même réglage se trouve au menu Affichage → Développeur.
+Dans Chrome, le même réglage se trouve au menu Présentation → Développeur, tout en bas. Attention : le message d'erreur de Chrome parle du menu « Affichage », qui n'existe pas dans sa version française.
 Firefox n'expose rien à AppleScript : la barre et les sauts de dix secondes y resteront masqués.
 
 Rien de tout cela n'est obligatoire. Ce qui n'est pas autorisé est simplement masqué, jamais affiché en panne."

@@ -106,7 +106,9 @@ Ces sites ne publient pas leur position à macOS ; elle ne peut être lue que
 dans la page elle-même. Dans Safari : Réglages → Avancé → « Afficher les
 fonctionnalités pour les développeurs web », puis menu Développement →
 « Autoriser JavaScript depuis les Apple Events ». Dans Chrome, le même réglage
-est au menu Affichage → Développeur. **Firefox n'expose rien à AppleScript** :
+est au menu **Présentation → Développeur**, tout en bas — et non « Affichage »,
+comme l'annonce à tort le message d'erreur de Chrome lui-même, qui nomme un
+menu absent de sa version française. **Firefox n'expose rien à AppleScript** :
 la barre et les deux sauts de dix secondes y resteront masqués, quel que soit
 le réglage.
 

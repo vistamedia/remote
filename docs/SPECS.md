@@ -276,6 +276,13 @@ L'élément `<video>` de la page, lui, sait tout. `lib/webplayer.js` l'interroge
 | Lire | `v.currentTime`, `v.duration`, `v.paused` |
 | Déplacer | `v.currentTime = n` |
 | Plein écran | `v.webkitEnterFullScreen()` |
+| Nommer | l'incrustation des contrôles, à défaut le titre de l'onglet |
+
+**Le nom de ce qui joue.** Netflix ne le publie nulle part ailleurs : ni au système, ni dans le titre de l'onglet — qui vaut « Netflix », sans plus — ni dans une métadonnée, un objet global ou le stockage local. Tout cela a été vérifié sur la page de lecture. Le seul endroit où il apparaît est l'incrustation des contrôles : un `h2` ou `h4` pour l'œuvre, un `h3` pour l'épisode, dans un conteneur `watch-video--evidence-overlay`. On s'appuie sur ce nom de conteneur et non sur les classes voisines, générées et renouvelées à chaque déploiement.
+
+Cette incrustation **disparaît du DOM** dès que les contrôles se masquent. Le titre n'est donc lisible que par intermittence, et il est retenu, associé au chemin de la page : Netflix change de chemin à chaque épisode, ce qui suffit à savoir quand l'oublier. Sans cette mémoire, le nom apparaîtrait et s'effacerait au gré des mouvements de souris devant le Mac.
+
+Le titre de la page ne s'impose que là où le système n'en donne pas de vrai — reconnaissable au fait qu'il est identique au nom de la source. Prime Video, qui publie un titre complet, garde la main.
 
 L'élément retenu est celui qui joue, sinon le plus long de ceux qui ont des données : une page porte souvent plusieurs vidéos — aperçus au survol, bandes-annonces, publicités.
 
@@ -418,7 +425,9 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/local.remote.plist
 | Transport et position sur VLC, QuickTime, Music, Spotify | aucun | — |
 | Plein écran sur VLC et QuickTime | aucun | — |
 | Plein écran dans un navigateur | Accessibilité pour le programme du LaunchAgent | bouton masqué |
-| Barre et sauts sur Netflix, Prime Video, YouTube | « Autoriser JavaScript depuis les Apple Events » (Safari, Chrome) | barre et sauts masqués |
+| Barre, sauts et titre sur Netflix, Prime Video, YouTube | « Autoriser JavaScript depuis les Apple Events » (Safari, Chrome) | barre, sauts et nom du film masqués |
+
+Le réglage se trouve dans Safari sous Réglages → Avancé puis menu Développement, et dans Chrome sous **Présentation → Développeur**, tout en bas. Le message d'erreur de Chrome désigne un menu « Affichage » qui n'existe pas dans sa version française : c'est « Présentation ».
 
 Le programme à autoriser est celui que lance le LaunchAgent — `node`, et non l'app de barre de menus : c'est son processus qui parle au système. Le menu en donne le chemin exact, lu dans le plist.
 
@@ -480,7 +489,7 @@ Deux commandes ont été ajoutées après coup : la luminosité de l'écran (§6
 
 - Chemins audio à volume verrouillé (HDMI, certains DAC) : hors de portée. Voir V1.
 - `nowplaying-cli` repose sur une API privée d'Apple : peut casser à toute mise à jour majeure de macOS. Le repli AppleScript ne couvre pas les navigateurs.
-- Netflix ne publie que « Netflix » comme titre, sans nom de film ni d'épisode, et laisse l'artiste et l'album vides. Prime Video publie le vrai titre : la différence vient de la source, pas de l'application. Compléter l'information supposerait de lire le titre de l'onglet, que Firefox n'expose pas à AppleScript.
+- Netflix ne publie que « Netflix » comme titre au système, sans nom de film ni d'épisode, et laisse l'artiste et l'album vides. Prime Video publie le vrai titre : la différence vient de la source, pas de l'application. Le nom réel se lit dans la page (§6.5), ce qui suppose Safari ou Chrome autorisé — dans Firefox, qui n'expose rien à AppleScript, le badge continue d'afficher « Netflix » seul.
 - Le changement d'épisode Netflix est hors de portée. Une page web doit déclarer auprès de l'API MediaSession les commandes qu'elle accepte ; Netflix déclare la lecture et la pause, mais pas le passage à la piste suivante ou précédente. Les boutons restent donc sans effet sur ses lectures — y compris depuis les touches média du clavier du Mac, ce qui confirme que rien ne vient de l'application. Ces deux boutons gardent tout leur sens pour Music, Spotify, VLC et YouTube.
 - Mac endormi : télécommande injoignable.
 - Pas de fonctionnement hors ligne : l'app est une fenêtre sur le serveur.
