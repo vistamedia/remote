@@ -142,7 +142,9 @@ Corps `{ "muted": true }` ou `{ "toggle": true }`.
 Corps `{ "action": "playpause" | "next" | "previous" }`, ou `{ "action": "seek", "position": 178 }` pour une position absolue en secondes.
 `503` si aucun backend média n'est disponible.
 
-`duration`, `elapsed` et `source` sont nuls quand la source ne les publie pas — c'est le cas de Netflix. `source` est déduit du titre publié : on nomme la lecture en cours, on ne la choisit pas.
+`duration` et `elapsed` sont nuls quand la source ne les publie pas — c'est le cas de Netflix, qui ne publie ni l'un ni l'autre.
+
+`source` est le **nom affichable** de ce qui joue : « Netflix », « Prime Video », « YouTube » quand le titre publié le trahit, sinon le nom de l'application déduit de `clientBundleIdentifier` — « VLC », « Music », « Spotify », ou le navigateur à défaut. Nul quand rien ne permet de nommer la source, auquel cas l'interface n'affiche aucun badge. On nomme la lecture en cours, on ne la choisit pas.
 
 ### `POST /api/fullscreen`
 
@@ -300,7 +302,7 @@ Fond indigo profond, accent fuchsia virant au violet sur le remplissage du volum
 ```
 ┌──────────────────────┐
 │  [🔈|☀]         ● ⬤  │   grandeur réglée, état de connexion
-│  ⋀  Winx Remote  [NF]│   icône, nom du Mac, source détectée
+│  ⋀ Winx Remote (Netflix)│ icône, nom du Mac, badge de source
 │                      │
 │          +           │
 │         75           │   nombre, très grand, centré
@@ -329,7 +331,7 @@ L'appui sans glissement reste inerte, comme prévu au §7.1 : il n'a pas été d
 - `viewport-fit=cover` et `env(safe-area-inset-*)` : la barre de transport doit rester au-dessus de l'indicateur d'accueil.
 - Pas de retour haptique : `navigator.vibrate` n'existe pas sur Safari iOS.
 - La capture de pointeur est défensive : elle échoue sur certains pointeurs sans que le glissement doive s'interrompre.
-- **Aucune commande morte à l'écran.** Le sélecteur de source est un indicateur, macOS n'exposant qu'une session de lecture à la fois. La barre de progression disparaît quand la source ne publie ni durée ni position.
+- **Aucune commande morte à l'écran.** Le nom de la source est un badge et non un sélecteur, macOS n'exposant qu'une session de lecture à la fois. La barre de progression et les deux sauts de dix secondes disparaissent quand la source ne publie pas sa position : un saut relatif sans origine renverrait le film à son début.
 
 ---
 

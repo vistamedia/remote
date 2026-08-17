@@ -120,18 +120,17 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
 
-  /* Indicateur de source, non cliquable : macOS n'expose qu'une session de
-     lecture à la fois et ne permet pas d'en choisir une. On nomme celle qui
-     joue, on ne la sélectionne pas. */
-  #sources{
-    display:flex;gap:6px;background:var(--indigo-700);
-    padding:4px;border-radius:999px;flex:none;
+  /* Nom de ce qui joue, à titre indicatif. macOS n'expose qu'une session de
+     lecture à la fois et ne permet pas d'en choisir une : d'où un badge, et
+     non un sélecteur. La forme à deux positions laissait croire à un choix
+     qui n'existe pas, et ne savait nommer que deux plateformes. */
+  #source{
+    flex:none;background:var(--indigo-700);
+    padding:9px 16px;border-radius:999px;
+    font-size:11px;font-weight:600;color:var(--lilac-300);
+    white-space:nowrap;
   }
-  #sources span{
-    font-size:11px;font-weight:600;padding:8px 14px;border-radius:999px;
-    color:var(--lilac-400);transition:background .2s ease,color .2s ease;
-  }
-  #sources span.on{background:var(--fuchsia);color:var(--indigo-800)}
+  #source[hidden]{display:none}
 
   /* ---------- zone de volume ---------- */
 
@@ -350,10 +349,7 @@
       <b>Winx Remote</b>
       <span id="device">…</span>
     </div>
-    <div id="sources" aria-label="Source en cours de lecture">
-      <span data-source="netflix">Netflix</span>
-      <span data-source="prime">Prime Video</span>
-    </div>
+    <span id="source" aria-label="Source en cours de lecture" hidden></span>
   </header>
 
   <div id="stage">
@@ -464,6 +460,7 @@ const downBtn  = document.getElementById("down");
 const fsBtn    = document.getElementById("fullscreen");
 const back10Btn= document.getElementById("back10");
 const fwd10Btn = document.getElementById("fwd10");
+const sourceBadge = document.getElementById("source");
 const nums     = document.querySelectorAll("[data-num]");
 const caps     = document.querySelectorAll("[data-cap]");
 
@@ -521,23 +518,14 @@ function render() {
 
   document.getElementById("title").textContent = title || "Rien en lecture";
 
-  const nomSource = sourceName === "netflix" ? "Netflix"
-                  : sourceName === "prime" ? "Prime Video" : null;
-  const parts = [];
-  /* Netflix ne publie que son propre nom comme titre : le répéter juste en
-     dessous n'apprendrait rien. */
-  if (nomSource && (!title || title.toLowerCase().indexOf(nomSource.toLowerCase()) === -1)) {
-    parts.push(nomSource);
-  }
-  if (artist) parts.push(artist);
-
+  /* Le badge porte désormais le nom de la source : le répéter sous le titre
+     n'apprendrait rien. Le sous-titre est rendu à l'artiste seul. */
   const sub = document.getElementById("subtitle");
-  sub.textContent = parts.length ? parts.join(" · ") : (title ? "" : "Aucune source détectée");
+  sub.textContent = artist || (title ? "" : "Aucune source détectée");
   sub.style.display = sub.textContent ? "" : "none";
 
-  document.querySelectorAll("#sources span").forEach(el => {
-    el.classList.toggle("on", el.dataset.source === sourceName);
-  });
+  sourceBadge.textContent = sourceName || "";
+  sourceBadge.hidden = !sourceName;
 
   const hasProgress = duration !== null && elapsed !== null;
   meta.classList.toggle("no-progress", !hasProgress);

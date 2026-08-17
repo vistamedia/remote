@@ -68,16 +68,22 @@ rôle de Claude Code est de **le brancher sur l'API, pas de le redessiner**.
   Plusieurs comportements sont délibérés : un déplacement de moins de 3 px n'est
   pas un glissement, le glissement pose le volume à la hauteur du doigt plutôt
   que par incréments, monter le volume sort automatiquement du mode muet.
-- **Ne jamais afficher une commande qui ne peut pas aboutir.** Le sélecteur de
-  source est un indicateur, pas un choix : macOS n'expose qu'une seule session
-  de lecture. La barre de progression se masque quand la source ne publie ni
-  durée ni position, plutôt que de rester figée à zéro.
+- **Ne jamais afficher une commande qui ne peut pas aboutir.** Le nom de la
+  source est un badge, pas un sélecteur : macOS n'expose qu'une seule session
+  de lecture, et la forme à deux positions du handoff laissait croire à un
+  choix. La barre de progression et les sauts de dix secondes se masquent
+  quand la source ne publie pas sa position, plutôt que de rester figés à
+  zéro — ou pire, de sauter à zéro faute d'origine.
 - Trois écarts assumés avec le handoff : le pas des boutons est de 5 et non 4,
   valeur validée à l'usage ; la police Outfit est embarquée dans `public/fonts/`
   au lieu d'être chargée depuis Google Fonts, la télécommande devant
   fonctionner sans accès à Internet ; le sélecteur volume/luminosité et le
   bouton de plein écran ne figurent pas au handoff, les deux commandes ayant
   été ajoutées après lui.
+- **Le sélecteur de source du handoff est devenu un badge.** Il n'affichait
+  que Netflix et Prime Video, et sa forme à deux positions suggérait un choix
+  impossible. Le nom vient maintenant du titre publié, sinon de
+  l'identifiant de bundle de l'application qui joue.
 - **L'appui sans glissement reste inerte.** C'est la cible la plus facile à
   viser dans le noir, donc la tentation est grande de lui confier la bascule
   volume/luminosité. Ne pas le faire sans demander : l'inertie est délibérée.
