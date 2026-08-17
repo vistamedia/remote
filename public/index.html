@@ -218,6 +218,10 @@
   .meta.no-progress #seek,
   .meta.no-progress .times{display:none}
 
+  /* Position affichée mais non déplaçable : la poignée disparaît, seul le
+     remplissage reste. Rien n'invite plus à un glissement sans effet. */
+  .meta.locked #seek .knob{display:none}
+
   #transport{display:flex;align-items:center;justify-content:space-between}
   .key{
     width:52px;height:52px;display:grid;place-items:center;
@@ -629,6 +633,9 @@ let brightness = 50, brightnessOk = false;
    fenêtre le soit. Le bouton reste alors neutre plutôt que de trancher. */
 let fullscreenOk = false, fullscreenActive = null;
 let duration = null, elapsed = null, sourceName = null;
+/* Faux uniquement quand le serveur a constaté qu'imposer une position casse
+   la lecture — Netflix la refuse et retombe sur son écran d'erreur. */
+let seekOk = true;
 let title = null, artist = null;
 let screenOff = false;
 let guardUntil = 0;
@@ -682,11 +689,16 @@ function render() {
 
   const hasProgress = duration !== null && elapsed !== null;
   meta.classList.toggle("no-progress", !hasProgress);
-  /* Sans position, il n'y a pas d'origine d'où sauter : les deux boutons
-     disparaissent au lieu de rester morts, comme la barre au-dessus d'eux.
-     La rangée de transport reste équilibrée à trois touches. */
-  back10Btn.classList.toggle("hidden", !hasProgress);
-  fwd10Btn.classList.toggle("hidden", !hasProgress);
+  /* Sans position, il n'y a pas d'origine d'où sauter ; et sur une page qui
+     refuse qu'on lui impose une position, sauter interromprait la lecture.
+     Dans les deux cas les boutons disparaissent au lieu de rester morts, et
+     la rangée de transport reste équilibrée à trois touches. */
+  const peutSauter = hasProgress && seekOk;
+  back10Btn.classList.toggle("hidden", !peutSauter);
+  fwd10Btn.classList.toggle("hidden", !peutSauter);
+  /* La barre reste affichée : elle informe de la position même quand on ne
+     peut pas la déplacer. Seule sa poignée s'efface. */
+  meta.classList.toggle("locked", !seekOk);
   if (hasProgress) {
     const ratio = Math.max(0, Math.min(1, elapsed / duration));
     document.documentElement.style.setProperty("--progress", (ratio * 100).toFixed(2) + "%");
@@ -796,6 +808,7 @@ function apply(s) {
   artist = m.artist || null;
   sourceName = m.source || null;
   duration = typeof m.duration === "number" ? m.duration : null;
+  seekOk = m.seekable !== false;
   if (typeof m.elapsed === "number") elapsed = m.elapsed;
   else if (duration === null) elapsed = null;
   render();
@@ -956,7 +969,7 @@ function moveSeek(clientX) {
 }
 
 seekBar.addEventListener("pointerdown", e => {
-  if (duration === null || elapsed === null) return;
+  if (duration === null || elapsed === null || !seekOk) return;
   /* Même capture défensive que pour le volume : elle échoue sur certains
      pointeurs sans que le glissement doive s'interrompre. */
   try { seekBar.setPointerCapture(e.pointerId); } catch (err) {}

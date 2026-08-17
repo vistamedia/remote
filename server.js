@@ -257,7 +257,14 @@ async function handleMedia(req, res) {
        que le site déclare — Netflix n'en déclare presque aucune. Elle a donc
        la main dès qu'elle répond. */
     if (webplayer.isAvailable()) {
-      await webplayer.seek(fullscreen.snapshot().app, body.position);
+      try {
+        await webplayer.seek(fullscreen.snapshot().app, body.position);
+      } catch (err) {
+        /* Page qui ne supporte pas qu'on lui impose une position : refus net,
+           plutôt qu'une lecture interrompue. */
+        if (err.blocked) return sendJson(res, 409, { error: err.message });
+        throw err;
+      }
     } else if (media.isAvailable()) {
       await media.seek(body.position);
     } else {

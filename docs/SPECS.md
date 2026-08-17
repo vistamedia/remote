@@ -288,6 +288,12 @@ L'élément retenu est celui qui joue, sinon le plus long de ceux qui ont des do
 
 `webkitEnterFullScreen` est l'API vidéo native, distincte de l'API Fullscreen du document : elle ne réclame **pas de geste utilisateur**, ce qui la rend utilisable depuis une télécommande, et elle vise la vidéo plutôt que la fenêtre. Le plein écran l'essaie donc avant la frappe de touche du §6.4.
 
+**Netflix refuse qu'on lui impose une position.** Il diffuse par Media Source Extensions : il alimente lui-même un tampon de segments chiffrés et gère sa session DRM. Écrire `currentTime` sort de ce qu'il a préparé, et le lecteur abandonne sur l'erreur **M7375** — constaté, la page doit être rechargée pour repartir, ce qui est bien pire que de ne pas savoir sauter.
+
+Son propre lecteur saurait le faire, mais il n'est pas joignable : `execute javascript` s'exécute dans un **monde isolé**, qui voit le DOM sans voir les variables de la page. L'objet `netflix` y est donc introuvable, et avec lui toute l'API du lecteur.
+
+Le module publie en conséquence un champ `seekable`, faux sur les hôtes où l'écriture a été vue casser la lecture. L'API refuse alors le déplacement par un `409`, et l'interface masque les deux sauts de dix secondes et la poignée de la barre — la barre elle-même reste affichée, car informer de la position garde tout son sens quand on ne peut pas la changer. La liste ne nomme que ce qui a été constaté : ailleurs, l'écriture est permise sans avoir été vérifiée site par site.
+
 **C'est un complément, jamais un remplacement.** Quand la page ne répond pas, l'état retombe sur celui du système. La page ne fournit que la position et la durée : `playing` reste à `media.js`, qui porte la bascule optimiste du bouton de lecture — l'écraser le ferait clignoter à chaque sondage.
 
 **Firefox est hors de portée.** Il n'expose rien à AppleScript, ni `do JavaScript` ni son équivalent. Sur Netflix dans Firefox, la barre et les sauts restent masqués quel que soit le réglage. Seuls Safari et Chrome répondent, et seulement après activation manuelle (§10).
@@ -498,6 +504,7 @@ Deux commandes ont été ajoutées après coup : la luminosité de l'écran (§6
 - Le plein écran d'une vidéo web reste hors de portée sans l'autorisation Accessibilité. Avec elle, la frappe de `f` atteint le lecteur, mais reste retenue tant que le curseur est dans un champ de saisie : le bouton ne fait alors rien, sans qu'on puisse le prévoir avant l'appui.
 - VLC n'expose pas la présence d'une piste vidéo : la commande est annoncée disponible dès qu'un média est chargé, et le refus n'apparaît qu'à la relecture qui suit l'écriture.
 - Firefox n'expose rien à AppleScript. La position lue dans la page, donc la barre et les sauts de dix secondes, n'y fonctionneront jamais — pas plus que le titre de l'onglet évoqué plus haut. Seuls Safari et Chrome répondent.
+- Sur Netflix, le déplacement dans la lecture est hors de portée, réglage ou non : imposer une position casse son tampon chiffré et le renvoie à l'erreur M7375, et son propre lecteur n'est pas joignable depuis un monde isolé. La position et le titre s'y lisent, mais ne s'y écrivent pas.
 - Netflix ne publie aucune position : sans le réglage du §10, la barre et les deux sauts restent masqués. C'est délibéré — les afficher supposait d'inventer une origine, ce qui renvoyait le film à son début.
 - Une installation par Mac, à vérifier machine par machine (§2). Rien n'est mutualisé, rien ne se synchronise.
 - Node.js doit être installé au préalable sur chaque machine.
