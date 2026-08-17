@@ -393,6 +393,9 @@
   #offline .foot span{
     font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#7A5F96;
   }
+  /* Jeton absent : réessayer ne peut rien donner, le bouton disparaît plutôt
+     que de promettre une reconnexion qui n'arrivera jamais. */
+  #offline.no-token .foot button{display:none}
 
   @keyframes wr-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
   @keyframes wr-shake{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
@@ -548,7 +551,7 @@
     </div>
 
     <div class="words">
-      <h2>Le sortilège<br>est tombé à plat</h2>
+      <h2 id="spell">Le sortilège<br>est tombé à plat</h2>
       <p id="quip"></p>
     </div>
   </div>
@@ -585,6 +588,12 @@
 const TOKEN = new URLSearchParams(location.search).get("t")
             || localStorage.getItem("remote_token") || "";
 if (TOKEN) localStorage.setItem("remote_token", TOKEN);
+
+/* Vrai dès qu'on sait que le serveur refusera : jeton jamais reçu, ou rendu
+   par un 401. Le cas se produit quand l'icône de l'écran d'accueil a été
+   posée sans le ?t= du QR code — le stockage local d'une app en mode
+   standalone est cloisonné, celui de Safari ne lui sert à rien. */
+let tokenRefuse = !TOKEN;
 
 const GUARD = 600;   // le serveur met ~190 ms à répondre : on ignore les échos
 const STEP  = 5;     // pas des boutons + et −, validé à l'usage
@@ -730,6 +739,7 @@ async function send(path, body) {
       headers: { "Content-Type": "application/json", "X-Token": TOKEN },
       body: JSON.stringify(body)
     });
+    if (r.status === 401) tokenRefuse = true;
     if (!r.ok) throw new Error(r.status);
     apply(await r.json());
     online(true);
@@ -743,6 +753,13 @@ function online(ok) {
     clearTimeout(offlineTimer);
     offlineTimer = null;
     showOffline(false);
+  } else if (tokenRefuse) {
+    /* Le refus est définitif tant que l'icône n'aura pas été reposée avec
+       son jeton : attendre trois secondes n'apporterait rien. */
+    clearTimeout(offlineTimer);
+    offlineTimer = null;
+    showOffline(true);
+    renderOffline();
   } else if (offlineTimer === null && offlineScreen.hidden) {
     /* Délai de grâce. Le flux SSE hoquette à chaque bascule de réseau et se
        rétablit de lui-même : couvrir l'écran à chaque hoquet serait
@@ -800,6 +817,7 @@ function listen() {
 async function refresh() {
   try {
     const r = await fetch("/api/state", { headers: { "X-Token": TOKEN } });
+    if (r.status === 401) tokenRefuse = true;
     if (!r.ok) throw new Error(r.status);
     apply(await r.json());
     online(true);
@@ -1028,6 +1046,21 @@ let quipIndex = 0, trying = false, offlineTimer = null;
 
 function renderOffline() {
   offlineScreen.classList.toggle("trying", trying);
+  offlineScreen.classList.toggle("no-token", tokenRefuse);
+
+  /* Un jeton absent ou refusé n'est pas une panne de réseau, et le dire le
+     serait à tort : le Mac répond très bien, c'est la clé qui manque. Sans
+     ce cas, l'écran renverrait l'utilisateur vers son routeur alors qu'il
+     doit rescanner un QR code. */
+  if (tokenRefuse) {
+    document.getElementById("spell").innerHTML = "Il manque<br>la formule";
+    document.getElementById("quip").textContent =
+      "Cette icône a été posée sans son jeton. Rescannez le QR code depuis le Mac, puis remettez la télécommande sur l'écran d'accueil.";
+    document.getElementById("tries").textContent = "jeton absent";
+    return;
+  }
+
+  document.getElementById("spell").innerHTML = "Le sortilège<br>est tombé à plat";
   document.getElementById("quip").textContent = OFFLINE_QUIPS[quipIndex];
   retryBtn.textContent = trying ? "Incantation en cours…"
     : (quipIndex >= OFFLINE_QUIPS.length - 1 ? "Insister quand même" : "Relancer le sortilège");
@@ -1058,6 +1091,7 @@ retryBtn.onclick = async () => {
 
   try {
     const r = await fetch("/api/state", { headers: { "X-Token": TOKEN }, cache: "no-store" });
+    if (r.status === 401) tokenRefuse = true;
     if (r.ok) { joignable = true; apply(await r.json()); }
   } catch (e) {
     /* Le Mac ne répond pas : la fée en fera une affaire personnelle. */
@@ -1080,7 +1114,7 @@ retryBtn.onclick = async () => {
 /* Le système signale le retour du réseau : la fée retente d'elle-même,
    sans qu'on ait à appuyer. */
 window.addEventListener("online", () => {
-  if (!offlineScreen.hidden && !trying) retryBtn.click();
+  if (!offlineScreen.hidden && !trying && !tokenRefuse) retryBtn.click();
 });
 
 /* L'écran de lancement s'efface dès que le premier état est là, mais pas

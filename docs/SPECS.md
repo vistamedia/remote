@@ -377,6 +377,10 @@ Ajout via Safari → Partager → « Sur l'écran d'accueil ». L'URL enregistr�
 - `apple-touch-icon` en 180 × 180, sinon iOS génère une capture d'écran comme icône.
 - Un `manifest.webmanifest` malgré tout, pour la cohérence et l'avenir.
 
+**Le manifeste ne doit pas déclarer `start_url`.** Depuis iOS 16.4, Safari l'honore à l'ajout à l'écran d'accueil : une valeur en dur ouvre la racine **sans le `?t=` du QR code**. Et comme le stockage local d'une app en mode standalone est cloisonné, le jeton mémorisé lors de la visite dans Safari n'y est pas non plus. L'icône s'ouvre alors sur une page qui se charge normalement mais dont chaque appel d'API est refusé — symptôme trompeur s'il en est : tout marche dans Safari, rien depuis l'écran d'accueil. Sans `start_url`, la spécification impose d'utiliser l'URL du document, celle du QR code, jeton compris.
+
+Le client sait distinguer ce cas d'une panne de réseau : un `401`, ou un jeton jamais reçu, affiche « Il manque la formule » et invite à rescanner, au lieu de renvoyer l'utilisateur vers son routeur. Le bouton de reconnexion disparaît alors, puisque réessayer ne peut rien donner.
+
 **Ce qui ne marchera pas, et c'est assumé.** En HTTP sur le LAN, la page n'est pas en contexte sécurisé. Donc : pas de service worker (aucune mise en cache hors ligne, et l'écran hors connexion du §7.4 ne peut être qu'une superposition, jamais une page servie en réponse d'échec de navigation) et pas de Wake Lock (l'écran de l'iPhone s'éteindra tout seul). Ce n'est pas gênant ici — l'app est inutile sans le serveur de toute façon, et on rallume l'iPhone d'un appui. Ce n'est donc pas une PWA au sens strict, mais une page web en plein écran avec une icône. La différence est invisible à l'usage.
 
 Si tu veux plus tard la vraie PWA : `mkcert` avec l'autorité installée sur l'iPhone, ou `tailscale serve` qui fournit un certificat valide et ouvre en prime l'accès depuis l'extérieur.
