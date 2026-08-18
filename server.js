@@ -38,6 +38,9 @@ const PUBLIC_DIR = path.resolve(__dirname, "public");
 const CONFIG_DIR = path.join(os.homedir(), ".remote");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 
+/* Durée de mise en cache des fichiers statiques, en secondes. */
+const CACHE_STATIQUE = 604800;
+
 /* Le corps d'une requête ne dépasse jamais quelques dizaines d'octets ici. */
 const MAX_BODY = 4096;
 
@@ -51,6 +54,36 @@ const TYPES = {
   ".svg": "image/svg+xml",
   ".woff2": "font/woff2"
 };
+
+/* ---------- version de l'interface ---------- */
+
+/* Les fichiers statiques sont mis en cache pour une semaine, faute de quoi
+   la télécommande ne s'ouvre pas du tout sans réseau : le navigateur exige
+   de revalider, la revalidation échoue, et l'écran hors connexion lui-même
+   ne peut pas s'afficher. Un service worker ferait mieux, mais il réclame un
+   contexte sécurisé — inaccessible en HTTP sur une adresse locale (§8).
+
+   Le cache empêcherait alors de voir les modifications de l'interface. On
+   publie donc son empreinte : la page connaît la sienne, l'API annonce
+   l'actuelle, et le client se recharge de lui-même quand les deux diffèrent.
+   L'empreinte est recalculée dès que le fichier change de date. */
+const PAGE = path.join(PUBLIC_DIR, "index.html");
+let versionCache = { mtime: 0, valeur: "0", contenu: null };
+
+function pageVersionnee() {
+  let mtime = 0;
+  try {
+    mtime = fs.statSync(PAGE).mtimeMs;
+  } catch (e) {
+    return versionCache;
+  }
+  if (mtime !== versionCache.mtime) {
+    const brut = fs.readFileSync(PAGE, "utf8");
+    const valeur = crypto.createHash("sha1").update(brut).digest("hex").slice(0, 8);
+    versionCache = { mtime, valeur, contenu: brut.split("__VERSION__").join(valeur) };
+  }
+  return versionCache;
+}
 
 /* Distingue une faute du client (400) d'une panne système (500). */
 class BadRequest extends Error {}
@@ -341,6 +374,10 @@ async function handleApi(req, res, url) {
   }
 
   try {
+    /* Recalculée au besoin : l'empreinte doit refléter le fichier tel
+       qu'il est maintenant, pas tel qu'il était au démarrage. */
+    state.setVersion(pageVersionnee().valeur);
+
     if (req.method === "GET" && url.pathname === "/api/state") {
       const base = await audio.read();
       /* Le média et le plein écran sont rafraîchis sans être attendus : une
@@ -407,12 +444,32 @@ function serveStatic(req, res, url) {
     return sendText(res, 403, "accès refusé");
   }
 
+  /* Une semaine de cache : c'est ce qui permet à la télécommande de
+     s'ouvrir sans réseau, et donc à l'écran hors connexion de s'afficher au
+     lieu d'une page blanche. Les mises à jour ne s'en trouvent pas retardées
+     pour autant, le client se rechargeant dès qu'il constate être périmé. */
+  const cache = "public, max-age=" + CACHE_STATIQUE;
+
+  /* La page porte son empreinte, substituée à la volée : servie telle
+     quelle, elle ne saurait pas se comparer à ce qu'annonce l'API. */
+  if (file === PAGE) {
+    const page = pageVersionnee();
+    if (page.contenu === null) return sendText(res, 404, "introuvable");
+    const corps = Buffer.from(page.contenu, "utf8");
+    res.writeHead(200, {
+      "Content-Type": TYPES[".html"],
+      "Content-Length": corps.length,
+      "Cache-Control": cache
+    });
+    return res.end(req.method === "HEAD" ? undefined : corps);
+  }
+
   fs.readFile(file, (err, data) => {
     if (err) return sendText(res, 404, "introuvable");
     res.writeHead(200, {
       "Content-Type": TYPES[path.extname(file)] || "application/octet-stream",
       "Content-Length": data.length,
-      "Cache-Control": "no-cache"
+      "Cache-Control": cache
     });
     res.end(req.method === "HEAD" ? undefined : data);
   });

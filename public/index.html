@@ -589,6 +589,26 @@
 <script>
 "use strict";
 
+/* Empreinte de cette page, substituée par le serveur au moment de la
+   servir. Les fichiers statiques sont mis en cache une semaine — c'est ce
+   qui permet à la télécommande de s'ouvrir sans réseau — et sans cette
+   comparaison, l'interface resterait figée sur l'iPhone après une mise à
+   jour. */
+const VERSION_PAGE = "__VERSION__";
+
+/* Un seul rechargement par session : si l'empreinte ne concordait jamais,
+   on tournerait en boucle sans jamais afficher la télécommande. */
+function verifierVersion(servie) {
+  if (!servie || servie === VERSION_PAGE) return;
+  if (sessionStorage.getItem("remote_reload") === servie) return;
+  sessionStorage.setItem("remote_reload", servie);
+  /* L'adresse doit changer pour que le cache soit contourné : rechargée
+     telle quelle, la page périmée reviendrait du cache. */
+  const url = new URL(location.href);
+  url.searchParams.set("v", servie);
+  location.replace(url.toString());
+}
+
 const TOKEN = new URLSearchParams(location.search).get("t")
             || localStorage.getItem("remote_token") || "";
 if (TOKEN) localStorage.setItem("remote_token", TOKEN);
@@ -787,6 +807,9 @@ function online(ok) {
 }
 
 function apply(s) {
+  /* Hors de la fenêtre de garde, qui ne protège que l'affichage optimiste :
+     une interface périmée doit se remplacer sans attendre. */
+  verifierVersion(s.version);
   if (Date.now() < guardUntil) return;
   if (Math.abs(s.volume - volume) > 3) volume = s.volume;  // tolérance d'arrondi macOS
   muted = s.muted;

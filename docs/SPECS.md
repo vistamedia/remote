@@ -402,7 +402,15 @@ Ajout via Safari → Partager → « Sur l'écran d'accueil ». L'URL enregistr�
 
 Le client sait distinguer ce cas d'une panne de réseau : un `401`, ou un jeton jamais reçu, affiche « Il manque la formule » et invite à rescanner, au lieu de renvoyer l'utilisateur vers son routeur. Le bouton de reconnexion disparaît alors, puisque réessayer ne peut rien donner.
 
-**Ce qui ne marchera pas, et c'est assumé.** En HTTP sur le LAN, la page n'est pas en contexte sécurisé. Donc : pas de service worker (aucune mise en cache hors ligne, et l'écran hors connexion du §7.4 ne peut être qu'une superposition, jamais une page servie en réponse d'échec de navigation) et pas de Wake Lock (l'écran de l'iPhone s'éteindra tout seul). Ce n'est pas gênant ici — l'app est inutile sans le serveur de toute façon, et on rallume l'iPhone d'un appui. Ce n'est donc pas une PWA au sens strict, mais une page web en plein écran avec une icône. La différence est invisible à l'usage.
+**Ce qui ne marchera pas, et c'est assumé.** En HTTP sur le LAN, la page n'est pas en contexte sécurisé. Donc : pas de service worker (l'écran hors connexion du §7.4 ne peut être qu'une superposition, jamais une page servie en réponse d'échec de navigation) et pas de Wake Lock (l'écran de l'iPhone s'éteindra tout seul).
+
+Ce n'est pas une opinion mais une règle appliquée par le navigateur, et elle se constate : depuis `http://localhost:8765`, `window.isSecureContext` vaut `true` et `navigator.serviceWorker` existe ; depuis `http://172.20.10.7:8765`, les deux valent respectivement `false` et `undefined`. L'objet n'est pas seulement inopérant, il est absent — aucun réglage serveur ne peut le faire apparaître.
+
+**S'ouvrir sans réseau, malgré tout.** Sans mise en cache, la télécommande ne démarre pas du tout hors connexion : le navigateur exige de revalider la page, la revalidation échoue, et l'écran hors connexion lui-même ne peut pas s'afficher — l'iPhone reste sur une page blanche. Les fichiers statiques sont donc servis avec `Cache-Control: public, max-age=604800`, une semaine.
+
+Ce cache figerait l'interface sur l'iPhone. Le serveur publie donc une **empreinte** de `index.html` — huit caractères de son SHA-1 — qu'il substitue au marqueur `__VERSION__` en servant la page, et qu'il annonce dans `GET /api/state`. La page compare la sienne à celle-ci et se remplace quand elles diffèrent, en ajoutant `&v=<empreinte>` à son adresse : rechargée telle quelle, elle reviendrait du cache. Un marqueur de session interdit plus d'un rechargement par empreinte, faute de quoi une discordance permanente ferait tourner la page en boucle.
+
+L'empreinte est recalculée dès que la date du fichier change : modifier l'interface n'oblige pas à redémarrer le serveur. Deux limites demeurent : la première ouverture doit avoir eu lieu en ligne, et une interface inutilisée pendant plus d'une semaine devra être rechargée une fois avec le réseau. Ce n'est pas gênant ici — l'app est inutile sans le serveur de toute façon, et on rallume l'iPhone d'un appui. Ce n'est donc pas une PWA au sens strict, mais une page web en plein écran avec une icône. La différence est invisible à l'usage.
 
 Si tu veux plus tard la vraie PWA : `mkcert` avec l'autorité installée sur l'iPhone, ou `tailscale serve` qui fournit un certificat valide et ouvre en prime l'accès depuis l'extérieur.
 
