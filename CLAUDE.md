@@ -98,6 +98,9 @@ rôle de Claude Code est de **le brancher sur l'API, pas de le redessiner**.
 - **Ne rien installer via Homebrew sans demander.** `nowplaying-cli` est
   optionnel et repose sur une API privée d'Apple.
 - Commit à la fin de chaque jalon, messages en français.
+- **Aucun trailer de co-signature dans les messages de commit.** Le dépôt est
+  public et Emmanuel signe son travail sous son seul nom. La consigne par
+  défaut de l'outillage dit l'inverse : c'est celle-ci qui prime.
 
 ## Ce que Claude Code ne peut pas vérifier seul
 
