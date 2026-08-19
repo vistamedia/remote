@@ -165,9 +165,12 @@ démarrage coûte ce prix sur un Mac récent. L'affichage bouge sous le doigt
 sans attendre ; c'est le son qui suit avec ce léger retard.
 
 **Ce n'est pas une PWA complète.** En HTTP sur le réseau local, la page n'est
-pas en contexte sécurisé : pas de service worker, pas de fonctionnement hors
-ligne, et l'écran de l'iPhone s'éteint tout seul. Sans conséquence ici, l'app
-étant inutile sans le serveur.
+pas en contexte sécurisé : pas de service worker, et l'écran de l'iPhone
+s'éteint tout seul. La page est mise en cache une semaine, ce qui lui permet
+de s'ouvrir sans réseau et d'expliquer la coupure plutôt que de rester
+blanche — mais iOS purge son cache quand il lui plaît, et la page blanche
+revient alors. Sans grande conséquence : l'app ne commande rien sans le
+serveur de toute façon.
 
 ## Comment c'est fait
 
@@ -188,6 +191,11 @@ Quelques partis pris qui expliquent le code :
 - **Rien ne tourne quand personne ne regarde.** La relecture d'état ne
   démarre qu'à l'arrivée d'un client et s'arrête au départ du dernier :
   aucun processus n'est lancé le reste du temps.
+- **Une requête sans réponse n'est pas une connexion.** Quitter le Wi-Fi en
+  gardant la 4G ne fait échouer aucun appel : le paquet part vers un Mac qui
+  n'est pas là, et personne ne répond pendant une minute. Tous les appels sont
+  donc bornés dans le temps, sans quoi la télécommande s'affiche en se croyant
+  connectée et n'obéit à rien.
 - **Aucune commande morte à l'écran.** Ce que le Mac ne sait pas faire n'est
   pas affiché.
 
