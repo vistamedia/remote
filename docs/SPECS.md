@@ -111,7 +111,8 @@ Toutes les réponses sont en JSON. Le token est transmis dans l'en-tête `X-Toke
   },
   "fullscreen": {
     "available": true, "active": false, "app": "VLC"
-  }
+  },
+  "addresses": ["mon-mac.home", "mon-mac.local", "192.168.1.16"]
 }
 ```
 
@@ -120,6 +121,8 @@ Toutes les réponses sont en JSON. Le token est transmis dans l'en-tête `X-Toke
 `brightnessControllable` joue le même rôle pour l'écran, et vaut `false` dès que DisplayServices refuse — écran externe, ou framework retiré par une mise à jour de macOS.
 
 `fullscreen.available` dit si l'application au premier plan se laisse piloter ; `active` vaut `null` quand elle ne publie pas son état, ce qui est le cas des navigateurs.
+
+`addresses` liste les adresses par lesquelles le Mac est joignable en ce moment : son nom tel que le réseau courant le suffixe, son nom Bonjour en `.local`, et les adresses IPv4 de ses cartes actives — les `169.254.x` d'auto-configuration exclues, elles ne mènent nulle part. Le champ n'accompagne **que cette route** : le diffuser dans chaque trame SSE alourdirait le flux pour une liste qui ne bouge qu'au changement de réseau. Son usage est décrit au §7.4.
 
 ### `POST /api/volume`
 
@@ -375,6 +378,9 @@ Variante **2A « Complice »** du handoff. Une fée a raté son sort ; le bouton
 - **Délai de grâce de 3 s** avant de couvrir l'écran, mais **seulement après une première connexion réussie**. Le flux SSE hoquette à chaque bascule de réseau et se rétablit seul ; recouvrir l'interface à chaque hoquet serait insupportable. Un démarrage qui n'aboutit pas, lui, n'a aucun état à préserver : l'attente n'y ajouterait que trois secondes de télécommande trompeuse. Cette branche rejoint donc celle du jeton refusé, qui court-circuitait déjà le délai pour la même raison.
 - **Le témoin de la barre du haut naît « hors ligne »** et ne devient « connecté » qu'une fois le Mac joint. Il réagit avant l'écran de la fée — il est discret, c'est son rôle — mais il n'affirme plus avant de savoir.
 - **La tentative est un vrai appel** au Mac, pas une animation de complaisance : succès, on revient à la télécommande et le flux est rouvert ; échec, réplique suivante. Le plancher de 1600 ms n'est pas une temporisation feinte — sans lui, un échec instantané rendrait l'incantation illisible.
+- **Chercher le Mac à une autre adresse.** L'icône de l'écran d'accueil fige l'adresse choisie le jour où on l'a posée, et le réseau change : le nom Bonjour ne résout pas en partage de connexion, et l'adresse IP d'hier n'est plus celle d'aujourd'hui. Une action secondaire, **apparue seulement après le premier échec d'incantation**, sonde les adresses connues puis navigue vers celle qui répond, jeton compris — le stockage d'une app autonome étant cloisonné par origine, il doit voyager dans l'adresse. Écart assumé avec le handoff, qui ne prévoit qu'un bouton : elle est dessinée comme le compteur d'essais, pas comme une seconde incantation.
+- **Les adresses viennent de deux sources.** Celles que le Mac publie (§4), retenues dans `localStorage` tant qu'on le joint ; et le sous-réseau `172.20.10.0/28`, que le partage de connexion d'iOS distribue toujours — l'iPhone s'y réserve `.1`, restent treize adresses. Sans ce second jeu, la fonction serait inutile dans le cas qui l'a motivée : une icône posée à la maison ne connaît que les adresses de la maison, et le Mac n'a pas d'adresse de partage de connexion tant qu'on n'y est pas.
+- **Le sondage se fait en `no-cors`**, deux secondes par adresse et toutes de front. On ne cherche pas à lire la réponse, seulement à savoir qui répond : sans `no-cors` le navigateur refuserait celle d'une autre origine, et un refus ne se distinguerait pas d'une absence.
 - **Rien n'est conservé** : on repart de la première réplique dès que l'écran a disparu, comme le demande le handoff.
 - `window.addEventListener("online")` relance une tentative sans qu'on ait à appuyer.
 - **Adaptation aux écrans courts.** Le handoff dessine sur un canvas de 844 px ; en dessous de 760 px de haut, la fée et les textes sont réduits, faute de quoi ils passeraient sous le bouton. Au-dessus, les valeurs du handoff s'appliquent telles quelles — la fée y fait ses 311 px exacts.
@@ -535,6 +541,7 @@ Deux commandes ont été ajoutées après coup : la luminosité de l'écran (§6
 - Firefox n'expose rien à AppleScript. La position lue dans la page, donc la barre et les sauts de dix secondes, n'y fonctionneront jamais — pas plus que le titre de l'onglet évoqué plus haut. Seuls Safari et Chrome répondent.
 - Sur Netflix, le déplacement dans la lecture est hors de portée, réglage ou non : imposer une position casse son tampon chiffré et le renvoie à l'erreur M7375, et son propre lecteur n'est pas joignable depuis un monde isolé. La position et le titre s'y lisent, mais ne s'y écrivent pas.
 - Netflix ne publie aucune position : sans le réglage du §10, la barre et les deux sauts restent masqués. C'est délibéré — les afficher supposait d'inventer une origine, ce qui renvoyait le film à son début.
+- Naviguer vers une autre adresse fait sortir l'app de son origine, ce qu'iOS gère mal en mode autonome : la télécommande peut y basculer dans Safari ou dans une vue de navigation, avec sa barre. Elle fonctionne, mais on perd le plein écran jusqu'à ce qu'une icône soit posée sur la nouvelle adresse. Deux icônes — une par adresse — restent la solution la plus confortable quand on alterne souvent.
 - L'écran de lancement n'est violet que sur les appareils listés au §8. Un iPhone non prévu revient au blanc d'iOS jusqu'à ce qu'on lui ajoute son image.
 - Une installation par Mac, à vérifier machine par machine (§2). Rien n'est mutualisé, rien ne se synchronise.
 - Node.js doit être installé au préalable sur chaque machine.

@@ -154,6 +154,39 @@ function checkToken(req, url) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+/* Adresses par lesquelles ce Mac est joignable en ce moment. L'icône de
+   l'écran d'accueil fige l'adresse choisie le jour où on l'a posée, alors que
+   le réseau, lui, change : le nom Bonjour ne résout pas en partage de
+   connexion, et l'adresse IP d'hier n'est plus celle d'aujourd'hui. La
+   télécommande les retient tant qu'elle nous joint, pour savoir où chercher
+   quand la sienne devient muette. */
+function localAddresses() {
+  const vues = new Set();
+  const liste = [];
+  const ajouter = hote => { if (hote && !vues.has(hote)) { vues.add(hote); liste.push(hote); } };
+
+  /* os.hostname() rend le nom tel que le réseau courant le suffixe — « .home »
+     derrière une box, « .local » ailleurs. On publie les deux : le nom Bonjour
+     est celui du QR code, et c'est le plus robuste à la maison. */
+  const brut = os.hostname();
+  ajouter(brut);
+  ajouter(brut.split(".")[0] + ".local");
+
+  const cartes = os.networkInterfaces();
+  for (const nom of Object.keys(cartes)) {
+    for (const carte of cartes[nom] || []) {
+      /* Node a hésité entre « IPv4 » et 4 selon les versions. */
+      const v4 = carte.family === "IPv4" || carte.family === 4;
+      /* 169.254.x est une auto-configuration : la carte est branchée mais
+         personne ne lui a donné d'adresse. Elle ne mène nulle part. */
+      if (v4 && !carte.internal && !carte.address.startsWith("169.254.")) {
+        ajouter(carte.address);
+      }
+    }
+  }
+  return liste;
+}
+
 /* ---------- réponses ---------- */
 
 function sendJson(res, status, payload) {
@@ -386,7 +419,12 @@ async function handleApi(req, res, url) {
          plus tard. */
       media.refresh();
       fullscreen.refresh();
-      return sendJson(res, 200, state.compose(base));
+      /* Les adresses n'accompagnent que cette route : les diffuser dans
+         chaque trame SSE alourdirait le flux pour une liste qui ne bouge
+         qu'au changement de réseau. */
+      return sendJson(res, 200, Object.assign({}, state.compose(base), {
+        addresses: localAddresses()
+      }));
     }
     if (req.method === "GET" && url.pathname === "/api/events") {
       /* État courant sans relecture : le client fait de toute façon un

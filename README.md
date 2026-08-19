@@ -160,6 +160,14 @@ qui isole ses clients. L'app de barre de menus propose alors un second QR code
 bâti sur l'adresse IP, qui fonctionne partout mais devra être refait si
 l'adresse change.
 
+Et comme l'icône de l'écran d'accueil fige l'adresse choisie le jour où on l'a
+posée, l'écran hors connexion sait chercher le Mac ailleurs : il sonde les
+adresses que la machine publiait la dernière fois qu'on l'a jointe, ainsi que
+le sous-réseau du partage de connexion, puis ouvre celle qui répond. Le
+confort a une limite : changer d'adresse fait sortir l'app de son origine, et
+iOS peut alors l'afficher avec la barre de Safari. Pour deux réseaux
+fréquentés souvent, deux icônes restent plus agréables.
+
 **Environ 190 ms de latence.** Chaque réglage passe par `osascript`, dont le
 démarrage coûte ce prix sur un Mac récent. L'affichage bouge sous le doigt
 sans attendre ; c'est le son qui suit avec ce léger retard.

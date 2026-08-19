@@ -410,6 +410,16 @@
   /* Jeton absent : réessayer ne peut rien donner, le bouton disparaît plutôt
      que de promettre une reconnexion qui n'arrivera jamais. */
   #offline.no-token .foot button{display:none}
+  /* Action secondaire, délibérément discrète : même graisse que le compteur
+     d'essais, pour ne pas concurrencer l'incantation qui reste le geste
+     principal. Elle n'apparaît qu'après un premier échec. */
+  #offline .foot button#ailleurs{
+    width:auto;height:auto;background:none;border-radius:0;
+    font-size:11px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--mauve-500);text-decoration:underline;text-underline-offset:4px;
+  }
+  #offline .foot button#ailleurs:active{background:none;color:var(--white)}
+  #offline.trying .foot button#ailleurs{background:none}
 
   @keyframes wr-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
   @keyframes wr-shake{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
@@ -573,6 +583,7 @@
   <div class="foot">
     <button id="retry"></button>
     <span id="tries"></span>
+    <button id="ailleurs" hidden></button>
   </div>
 </div>
 
@@ -859,6 +870,7 @@ function apply(s) {
   /* Hors de la fenêtre de garde, qui ne protège que l'affichage optimiste :
      une interface périmée doit se remplacer sans attendre. */
   verifierVersion(s.version);
+  retenirHotes(s.addresses);
   if (Date.now() < guardUntil) return;
   if (Math.abs(s.volume - volume) > 3) volume = s.volume;  // tolérance d'arrondi macOS
   muted = s.muted;
@@ -1124,15 +1136,26 @@ const OFFLINE_QUIPS = [
 
 const OFFLINE_GRACE = 3000;   // avant de couvrir l'écran
 const OFFLINE_TRY   = 1600;   // plancher d'incantation, pour qu'elle se voie
+const SONDAGE_MAX   = 2000;   // par adresse essayée, sur un réseau local
 
 const offlineScreen = document.getElementById("offline");
 const retryBtn = document.getElementById("retry");
 
+const ailleursBtn = document.getElementById("ailleurs");
+
 let quipIndex = 0, trying = false, offlineTimer = null;
+let cherche = false, rienTrouve = false;
 
 function renderOffline() {
   offlineScreen.classList.toggle("trying", trying);
   offlineScreen.classList.toggle("no-token", tokenRefuse);
+
+  /* Après le premier échec seulement : tant que l'incantation n'a pas été
+     tentée, proposer une autre adresse reviendrait à douter avant d'avoir
+     essayé. */
+  ailleursBtn.hidden = quipIndex < 1;
+  ailleursBtn.textContent = cherche ? "recherche en cours…"
+    : (rienTrouve ? "aucune adresse ne répond" : "chercher une autre adresse");
 
   /* Un jeton absent ou refusé n'est pas une panne de réseau, et le dire le
      serait à tort : le Mac répond très bien, c'est la clé qui manque. Sans
@@ -1155,12 +1178,82 @@ function renderOffline() {
     : "tentatives : " + quipIndex;
 }
 
+/* ---------- chercher le Mac à une autre adresse ---------- */
+
+/* L'icône de l'écran d'accueil fige l'adresse choisie le jour où on l'a
+   posée, et le réseau change : le nom Bonjour ne résout pas en partage de
+   connexion, et l'adresse IP d'hier n'est plus celle d'aujourd'hui. La page
+   retient donc celles que le Mac publie tant qu'elle le joint. */
+const HOTES = "remote_hotes";
+const PORT  = location.port || "8765";
+
+/* Le partage de connexion d'iOS distribue toujours 172.20.10.0/28 : l'iPhone
+   se réserve .1, il reste treize adresses pour ses clients. C'est la seule
+   façon de trouver le Mac sur un réseau où on ne l'a jamais joint — les
+   adresses retenues, elles, sont celles d'hier et d'ailleurs. */
+const PARTAGE = "172.20.10.";
+
+function retenirHotes(liste) {
+  if (!Array.isArray(liste) || !liste.length) return;
+  try { localStorage.setItem(HOTES, JSON.stringify(liste)); } catch (e) {}
+}
+
+function candidats() {
+  let connus = [];
+  try { connus = JSON.parse(localStorage.getItem(HOTES) || "[]"); } catch (e) {}
+  const liste = [];
+  const ajouter = h => {
+    if (h && h !== location.hostname && liste.indexOf(h) === -1) liste.push(h);
+  };
+  if (Array.isArray(connus)) connus.forEach(ajouter);
+  for (let n = 2; n <= 14; n++) ajouter(PARTAGE + n);
+  return liste;
+}
+
+/* Une réponse opaque suffit : on ne cherche pas à lire, seulement à savoir
+   qui répond. Sans « no-cors » le navigateur refuserait la réponse d'une
+   autre origine, et un refus ne se distinguerait pas d'une absence. */
+function joignable(hote) {
+  const arret = new AbortController();
+  const minuteur = setTimeout(() => arret.abort(), SONDAGE_MAX);
+  return fetch("http://" + hote + ":" + PORT + "/icons/icon-180.png",
+               { mode: "no-cors", cache: "no-store", signal: arret.signal })
+    .then(() => hote)
+    .finally(() => clearTimeout(minuteur));
+}
+
+ailleursBtn.onclick = async () => {
+  if (cherche) return;
+  cherche = true;
+  rienTrouve = false;
+  renderOffline();
+
+  let trouve = null;
+  try {
+    /* Toutes de front : sur un réseau local, celle qui répond le fait en
+       quelques millisecondes, et les absentes tiennent jusqu'au plancher. */
+    trouve = await Promise.any(candidats().map(joignable));
+  } catch (e) {
+    /* Promise.any n'échoue que si toutes ont échoué. */
+  }
+
+  cherche = false;
+  if (trouve) {
+    /* Le jeton doit voyager dans l'adresse : le stockage d'une app autonome
+       est cloisonné par origine, celui d'ici ne servira pas là-bas. */
+    location.replace("http://" + trouve + ":" + PORT + "/?t=" + encodeURIComponent(TOKEN));
+    return;
+  }
+  rienTrouve = true;
+  renderOffline();
+};
+
 function showOffline(shown) {
   if (shown === !offlineScreen.hidden) return;
   offlineScreen.hidden = !shown;
   /* Rien n'est conservé d'une fois sur l'autre : on repart de la première
      réplique dès que l'écran a disparu. */
-  if (!shown) { quipIndex = 0; trying = false; }
+  if (!shown) { quipIndex = 0; trying = false; cherche = false; rienTrouve = false; }
   renderOffline();
 }
 
