@@ -12,6 +12,16 @@
 <meta name="apple-mobile-web-app-title" content="Winx Remote">
 <meta name="theme-color" content="#180B2E">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
+<!-- Écrans de lancement. Sans eux iOS affiche du blanc le temps que la page
+     arrive, et ce blanc ressemble à une panne. La correspondance média doit
+     être exacte, sinon iOS retombe sur le blanc : un appareil de plus veut
+     une ligne de plus, et un passage par tools/launch-images.js. -->
+<link rel="apple-touch-startup-image" href="icons/launch-1179x2556.png"
+      media="screen and (device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="icons/launch-1284x2778.png"
+      media="screen and (device-width:428px) and (device-height:926px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
+<link rel="apple-touch-startup-image" href="icons/launch-1290x2796.png"
+      media="screen and (device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Winx Remote</title>
 <style>

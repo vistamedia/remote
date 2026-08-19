@@ -394,7 +394,11 @@ Variante **2A « Complice »** du handoff. Une fée a raté son sort ; le bouton
 
 Ajout via Safari → Partager → « Sur l'écran d'accueil ». L'URL enregistrée contient le token, qui n'est donc à saisir qu'une fois.
 
-**L'écran blanc du lancement n'est pas une panne.** iOS affiche son propre écran de lancement, blanc, tant qu'aucune `apple-touch-startup-image` n'est déclarée ; le `background_color` du manifeste ne s'y applique pas. Ce blanc précède donc toujours l'écran de lancement de la page, réseau ou non. Il se confond à l'œil avec la page blanche du §12 — celle qui, elle, ne mène nulle part — et il faut les distinguer avant tout diagnostic : le blanc d'iOS dure une fraction de seconde et cède la place au splash violet.
+**L'écran de lancement d'iOS.** Tant qu'aucune `apple-touch-startup-image` n'est déclarée, iOS affiche le sien, blanc — le `background_color` du manifeste ne s'y applique pas. Ce blanc n'annonçait aucune panne, mais il se confondait à l'œil avec la page blanche du §12, celle qui ne mène nulle part, et il donnait l'impression que l'appui n'avait rien déclenché.
+
+Il est donc remplacé par un aplat de `#150826`, la couleur du splash, qui enchaîne sans marche visible. **Un aplat, délibérément** : il n'y a rien à y dessiner, donc rien à redessiner du splash existant, et rien qui puisse en diverger. Les images sont produites par `tools/launch-images.js` — encodeur PNG en zlib, sans dépendance — et pèsent une douzaine de kilo-octets chacune.
+
+iOS exige une correspondance média exacte : largeur, hauteur et rapport de pixels. Il faut donc **une image par appareil**, et un appareil non prévu retombe sur le blanc. Ajouter le sien tient en deux gestes : une ligne dans `APPAREILS`, une balise `<link>` dans la page. Attention enfin : ces balises sont lues à l'ajout à l'écran d'accueil — une icône déjà posée devra être retirée et remise pour que l'image apparaisse.
 
 **Requis :**
 - `<meta name="apple-mobile-web-app-capable" content="yes">` — supprime la barre Safari.
@@ -531,6 +535,7 @@ Deux commandes ont été ajoutées après coup : la luminosité de l'écran (§6
 - Firefox n'expose rien à AppleScript. La position lue dans la page, donc la barre et les sauts de dix secondes, n'y fonctionneront jamais — pas plus que le titre de l'onglet évoqué plus haut. Seuls Safari et Chrome répondent.
 - Sur Netflix, le déplacement dans la lecture est hors de portée, réglage ou non : imposer une position casse son tampon chiffré et le renvoie à l'erreur M7375, et son propre lecteur n'est pas joignable depuis un monde isolé. La position et le titre s'y lisent, mais ne s'y écrivent pas.
 - Netflix ne publie aucune position : sans le réglage du §10, la barre et les deux sauts restent masqués. C'est délibéré — les afficher supposait d'inventer une origine, ce qui renvoyait le film à son début.
+- L'écran de lancement n'est violet que sur les appareils listés au §8. Un iPhone non prévu revient au blanc d'iOS jusqu'à ce qu'on lui ajoute son image.
 - Une installation par Mac, à vérifier machine par machine (§2). Rien n'est mutualisé, rien ne se synchronise.
 - Node.js doit être installé au préalable sur chaque machine.
 
