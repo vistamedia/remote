@@ -431,7 +431,7 @@
         </svg>
       </button>
     </div>
-    <span id="link">connecté</span>
+    <span id="link" class="off">hors ligne</span>
   </div>
 
   <header>
@@ -763,10 +763,27 @@ function setCurrent(v) {
 
 /* ---------- réseau ---------- */
 
+/* Il y a deux façons d'être hors réseau et elles ne se ressemblent pas. En
+   mode avion, iOS rejette immédiatement. Sur la 4G ou sur un autre Wi-Fi, la
+   route existe et le paquet part vers un Mac qui n'est pas là : la requête
+   reste en vol jusqu'au délai TCP du système, une bonne minute pendant
+   laquelle rien n'échoue — l'interface se croit connectée et ne répond à
+   rien. On tranche donc nous-mêmes, au lieu d'attendre un verdict qui ne
+   vient pas. Le serveur répond en 190 ms : 2,5 s laissent treize fois la
+   marge. */
+const REPONSE_MAX = 2500;
+
+function fetchBorne(url, options) {
+  const arret = new AbortController();
+  const minuteur = setTimeout(() => arret.abort(), REPONSE_MAX);
+  return fetch(url, Object.assign({}, options, { signal: arret.signal }))
+    .finally(() => clearTimeout(minuteur));
+}
+
 async function send(path, body) {
   guardUntil = Date.now() + GUARD;
   try {
-    const r = await fetch("/api" + path, {
+    const r = await fetchBorne("/api" + path, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Token": TOKEN },
       body: JSON.stringify(body)
@@ -778,16 +795,24 @@ async function send(path, body) {
   } catch { online(false); }
 }
 
+/* Le délai de grâce couvre un flux qui hoquette, ce qui suppose qu'il ait
+   d'abord tenu. Tant qu'on n'a jamais joint le Mac, il n'y a rien à
+   ménager. */
+let jamaisConnecte = true;
+
 function online(ok) {
   link.classList.toggle("off", !ok);
 
   if (ok) {
+    jamaisConnecte = false;
     clearTimeout(offlineTimer);
     offlineTimer = null;
     showOffline(false);
-  } else if (tokenRefuse) {
-    /* Le refus est définitif tant que l'icône n'aura pas été reposée avec
-       son jeton : attendre trois secondes n'apporterait rien. */
+  } else if (tokenRefuse || jamaisConnecte) {
+    /* Le refus du jeton est définitif tant que l'icône n'aura pas été reposée
+       avec le sien, et un démarrage qui n'aboutit pas n'a aucun état à
+       préserver : dans les deux cas, attendre trois secondes ne ferait que
+       laisser croire trois secondes de plus à une télécommande qui marche. */
     clearTimeout(offlineTimer);
     offlineTimer = null;
     showOffline(true);
@@ -853,7 +878,7 @@ function listen() {
 
 async function refresh() {
   try {
-    const r = await fetch("/api/state", { headers: { "X-Token": TOKEN } });
+    const r = await fetchBorne("/api/state", { headers: { "X-Token": TOKEN } });
     if (r.status === 401) tokenRefuse = true;
     if (!r.ok) throw new Error(r.status);
     apply(await r.json());
@@ -1020,7 +1045,7 @@ seekBar.addEventListener("pointercancel", endSeek);
    l'affichage optimiste du volume. */
 fsBtn.onclick = async () => {
   try {
-    const r = await fetch("/api/fullscreen", {
+    const r = await fetchBorne("/api/fullscreen", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Token": TOKEN },
       body: JSON.stringify({ toggle: true })
@@ -1127,7 +1152,7 @@ retryBtn.onclick = async () => {
   let joignable = false;
 
   try {
-    const r = await fetch("/api/state", { headers: { "X-Token": TOKEN }, cache: "no-store" });
+    const r = await fetchBorne("/api/state", { headers: { "X-Token": TOKEN }, cache: "no-store" });
     if (r.status === 401) tokenRefuse = true;
     if (r.ok) { joignable = true; apply(await r.json()); }
   } catch (e) {
