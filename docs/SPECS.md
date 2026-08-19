@@ -394,6 +394,8 @@ Variante **2A « Complice »** du handoff. Une fée a raté son sort ; le bouton
 
 Ajout via Safari → Partager → « Sur l'écran d'accueil ». L'URL enregistrée contient le token, qui n'est donc à saisir qu'une fois.
 
+**L'écran blanc du lancement n'est pas une panne.** iOS affiche son propre écran de lancement, blanc, tant qu'aucune `apple-touch-startup-image` n'est déclarée ; le `background_color` du manifeste ne s'y applique pas. Ce blanc précède donc toujours l'écran de lancement de la page, réseau ou non. Il se confond à l'œil avec la page blanche du §12 — celle qui, elle, ne mène nulle part — et il faut les distinguer avant tout diagnostic : le blanc d'iOS dure une fraction de seconde et cède la place au splash violet.
+
 **Requis :**
 - `<meta name="apple-mobile-web-app-capable" content="yes">` — supprime la barre Safari.
 - `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`
@@ -411,6 +413,10 @@ Ce n'est pas une opinion mais une règle appliquée par le navigateur, et elle s
 **S'ouvrir sans réseau, malgré tout.** Sans mise en cache, la télécommande ne démarre pas du tout hors connexion : le navigateur exige de revalider la page, la revalidation échoue, et l'écran hors connexion lui-même ne peut pas s'afficher — l'iPhone reste sur une page blanche. Les fichiers statiques sont donc servis avec `Cache-Control: public, max-age=604800`, une semaine.
 
 Ce cache figerait l'interface sur l'iPhone. Le serveur publie donc une **empreinte** de `index.html` — huit caractères de son SHA-1 — qu'il substitue au marqueur `__VERSION__` en servant la page, et qu'il annonce dans `GET /api/state`. La page compare la sienne à celle-ci et se remplace quand elles diffèrent, en ajoutant `&v=<empreinte>` à son adresse : rechargée telle quelle, elle reviendrait du cache. Un marqueur de session interdit plus d'un rechargement par empreinte, faute de quoi une discordance permanente ferait tourner la page en boucle.
+
+**Deux adresses, deux entrées de cache.** Ce mécanisme a un angle mort, constaté sur l'iPhone et non prévu : `?t=…` et `?t=…&v=…` sont deux entrées de cache distinctes, et l'icône de l'écran d'accueil ouvre toujours la première. Le rechargement versionné n'alimente donc que la seconde, la première gardant son contenu jusqu'à l'expiration de la semaine. En ligne cela ne se voit pas — chaque ouverture repart de la vieille page et se corrige en une seconde — mais **hors réseau il n'y a personne pour constater le décalage** : l'ancienne interface tient sa semaine, et un correctif portant sur le comportement hors réseau ne peut, par construction, pas arriver par ce chemin-là.
+
+La page réécrit donc l'entrée de l'icône dès qu'elle constate être arrivée par un `v` — ce qui est précisément la preuve que cette entrée était périmée : `fetch(base, { cache: "reload" })` va au réseau et repose la réponse dans le cache. C'est la primitive que le détour par `&v=` contournait faute de mieux, `location.reload(true)` n'existant plus. Les deux cohabitent : le `v` assure la mise à jour immédiate, la réécriture prépare le lancement suivant. Le stockage d'une app en mode autonome étant cloisonné de celui de Safari, cette réécriture ne peut venir que de l'intérieur de l'app — une visite dans Safari ne guérirait rien.
 
 L'empreinte est recalculée dès que la date du fichier change : modifier l'interface n'oblige pas à redémarrer le serveur. Deux limites demeurent : la première ouverture doit avoir eu lieu en ligne, et une interface inutilisée pendant plus d'une semaine devra être rechargée une fois avec le réseau. Ce n'est pas gênant ici — l'app est inutile sans le serveur de toute façon, et on rallume l'iPhone d'un appui. Ce n'est donc pas une PWA au sens strict, mais une page web en plein écran avec une icône. La différence est invisible à l'usage.
 

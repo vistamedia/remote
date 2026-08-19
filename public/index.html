@@ -609,6 +609,20 @@ function verifierVersion(servie) {
   location.replace(url.toString());
 }
 
+/* L'icône de l'écran d'accueil ouvre toujours l'adresse sans « v ». C'est donc
+   cette entrée de cache que le navigateur servira au lancement suivant, réseau
+   ou pas — et le rechargement versionné n'alimente que la sienne, les deux
+   adresses étant des entrées distinctes. La vieille tiendrait sa semaine, et
+   l'ouverture hors réseau resterait sur une page périmée sans personne pour
+   constater le décalage. Être arrivé par un « v » prouve précisément qu'elle
+   l'est : on la réécrit. « reload » va au réseau et repose la réponse dans le
+   cache, ce que le détour par « v » contournait faute de mieux. */
+if (new URLSearchParams(location.search).has("v")) {
+  const base = new URL(location.href);
+  base.searchParams.delete("v");
+  fetch(base.toString(), { cache: "reload" }).catch(() => {});
+}
+
 const TOKEN = new URLSearchParams(location.search).get("t")
             || localStorage.getItem("remote_token") || "";
 if (TOKEN) localStorage.setItem("remote_token", TOKEN);
